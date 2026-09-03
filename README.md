@@ -4,7 +4,7 @@
 화면에 뜨는 **호감도**는 그가 추정한 값이다.
 마지막 날, 100%가 된 사람 중에서 고른다.
 
-**▶ [플레이하기](https://USERNAME.github.io/myeonje/)**
+**▶ [플레이하기](https://hojunsung.github.io/myeonje/)**
 
 ---
 
