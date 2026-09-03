@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#08070c">
 <meta name="description" content="일주일 동안 다섯 사람을 만난다. 화면에 뜨는 호감도는 그가 추정한 값이다.">
 <meta property="og:type" content="website">
@@ -12,14 +12,16 @@
 <style>
   :root{--ink:#eeeaf5;--dim:#9b95ad;--heart:#e2607a;--gold:#d9a441;--accent:#7f6ddb;--hp:#c9524b;}
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
+  html,body{margin:0;height:100%;overscroll-behavior:none}
   body{background:#08070c;color:var(--ink);
     font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;
     display:flex;align-items:center;justify-content:center;padding:12px}
 
   .vn{position:relative;width:min(97vw,168vh,1560px);aspect-ratio:16/9;
     border-radius:14px;overflow:hidden;background:#000;
-    box-shadow:0 30px 90px #000a;cursor:pointer;user-select:none}
+    box-shadow:0 30px 90px #000a;cursor:pointer;user-select:none;
+    /* 연타가 더블탭 확대로 잡히지 않게 한다 */
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .vn>svg.bg{position:absolute;inset:0;width:100%;height:100%}
   /* 배경 컨테이너 — 안의 svg·canvas가 화면을 정확히 채우게 한다 */
   #bg{position:absolute;inset:0;overflow:hidden}
@@ -278,6 +280,53 @@
   .endtag.bad{color:#7f8aa3}
   .endtag.bad::before,.endtag.bad::after{background:#3a4152}
   .endno{letter-spacing:.1em;font-weight:700;opacity:.62;font-size:14px}
+
+  /* ── 좁은 화면 (폰 가로) ── 값은 전부 데스크톱 비율을 줄인 것 */
+  @media (max-width: 900px) {
+    body{padding:0}
+    .vn{width:100vw;border-radius:0;box-shadow:none}
+    .hud{padding:12px 14px;gap:8px}
+    .when{padding:8px 13px}
+    .when b{font-size:16px} .when span{font-size:11px}
+    .stats{padding:9px 12px 10px;gap:7px;min-width:0;width:min(42vw,210px)}
+    .stats .money{font-size:16px}
+    .st{gap:7px}
+    .st .lb{font-size:11px;width:26px}
+    .st .rb{height:9px}
+    .st .vv{font-size:12px;width:26px}
+    .aff{top:74px;left:14px;width:min(46%,240px);padding:10px 13px 12px}
+    .aff .ttl{font-size:12px}
+    .reason{left:14px;top:150px;width:min(50%,260px);font-size:12px}
+    .box{left:2%;right:2%;bottom:2.5%;padding:14px 18px 18px;
+      min-height:32%;border-radius:12px}
+    .name{top:-14px;left:18px;font-size:13px;padding:4px 12px}
+    .line{font-size:15px;line-height:1.75;min-height:3.2em}
+    .next{right:16px;bottom:11px;font-size:11px}
+    .choices{width:84%;gap:8px;max-height:82%}
+    .choices button{font-size:14px;padding:11px 14px;border-radius:9px}
+    .cost i{font-size:11px;padding:2px 8px;margin-right:5px}
+    .card b{font-size:30px}
+    .card .sub{font-size:15px;line-height:1.8}
+    .title h1{font-size:40px}
+    .title .pitch{font-size:14px;line-height:1.8;padding:0 12px}
+    .title .go{padding:13px 40px;font-size:17px}
+    .title .keys{font-size:11px}
+    .coll .grid{grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:5px}
+    .coll .cell{font-size:10px;padding:6px 4px}
+    .shellhud{width:min(80%,520px);padding:14px 18px}
+    .typing{width:min(84%,520px)}
+  }
+
+  /* ── 세로 화면 ── 가로로 돌려야 한다 ── */
+  .rotate{position:absolute;inset:0;z-index:70;display:none;
+    flex-direction:column;align-items:center;justify-content:center;gap:22px;
+    background:#08070c;color:#a49db8;text-align:center;padding:30px}
+  .rotate.on{display:flex}
+  .rotate .phone{width:54px;height:90px;border:3px solid #7f6ddb;border-radius:10px;
+    animation:돌려 2.4s ease-in-out infinite}
+  .rotate b{font-size:19px;color:#efeaf8;font-weight:700}
+  .rotate small{font-size:13px;color:#635e78;line-height:1.9}
+  @keyframes 돌려{0%,30%{transform:rotate(0)}55%,100%{transform:rotate(-90deg)}}
   .새엔딩{margin-left:12px;font-size:11px;letter-spacing:.2em;color:#0d0b12;
     background:#f0b45e;padding:3px 8px;border-radius:3px;vertical-align:middle}
 
@@ -350,10 +399,11 @@
     <div class="once" id="fnOnce">기회는 한 번이다</div>
   </div>
 
-  <div class="typing" id="typing">
+  <div class="typing" id="typing" onpointerdown="var i=document.getElementById(&quot;tyInput&quot;); if(!i.disabled) i.focus();">
     <div class="said" id="tySaid"></div>
     <div class="hint" id="tyHint"></div>
-    <input id="tyInput" type="text" autocomplete="off" spellcheck="false">
+    <input id="tyInput" type="text" autocomplete="off" autocapitalize="off"
+           autocorrect="off" spellcheck="false" enterkeyhint="send">
     <div class="bar"><i id="tyBar"></i></div>
     <div class="left" id="tyLeft"></div>
   </div>
@@ -369,6 +419,13 @@
 
   <div class="taint" id="taint"></div>
 
+  <div class="rotate" id="rotate">
+    <div class="phone"></div>
+    <b>화면을 가로로 돌려주세요</b>
+    <small>이 게임은 가로 화면에 맞춰 그려집니다.<br>
+    소개팅의 마지막 장면에는 <b style="font-size:13px">글자 입력</b>이 필요합니다.</small>
+  </div>
+
   <div class="title" id="title">
     <h1>면제</h1>
     <div class="week">A WEEK</div>
@@ -379,9 +436,7 @@
       마지막 날, 100%가 된 사람 중에서 고른다.
     </div>
     <button class="go" onclick="시작하기()">시작</button>
-    <div class="keys">
-      클릭으로 진행 · 미니게임은 <b>방향키 / 스페이스 / 마우스</b>
-    </div>
+    <div class="keys" id="keys"></div>
     <div class="coll" id="coll"></div>
   </div>
   <div class="gain" id="gain"></div>
@@ -1121,6 +1176,19 @@ const 이벤트들 = [
    PART 3. 엔진
    ══════════════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
+
+/* ── 터치 기기 ── UA 대신 입력 방식으로 판별한다 */
+const 터치기기 = matchMedia("(hover: none) and (pointer: coarse)").matches;
+/* 조작 안내를 입력 방식에 맞춰 고른다 */
+const 조작 = (키보드, 터치) => 터치기기 ? 터치 : 키보드;
+
+/* ── 세로면 가로로 돌려달라고 한다 ── 캔버스 미니게임이 전부 16:9 전제다 */
+function 방향확인() {
+  const 세로 = innerHeight > innerWidth;
+  $("rotate").classList.toggle("on", 터치기기 && 세로);
+}
+addEventListener("resize", 방향확인);
+addEventListener("orientationchange", () => setTimeout(방향확인, 120));
 let S, 큐 = [], 현재 = null, 타이핑 = null, 완료 = true, 줄i = 0, 대기 = null;
 
 function 새게임() {
@@ -1500,6 +1568,7 @@ const 미니화면 = on => $("vn").classList.toggle("미니", on);
 
 /* ── 타이핑 (소개팅 최종 미니게임) ──
    그녀가 먼저 말한다. 제한 시간 안에 답을 쳐야 한다. */
+/* ※ 이 미니게임만 글자 입력이 필요하다. 모바일에서는 키보드가 올라온다. */
 const 타이핑설정 = {
   대사: "나 너 좋아해",
   답: "사귀자",
@@ -1580,7 +1649,7 @@ MINI.훔쳐보기 = (() => {
     입력(true);
     $("shellhud").className = "shellhud on";
     $("shellhud").innerHTML = `<b>계단</b>` +
-      `<small>그녀가 휴대폰을 옆으로 내미는 순간에만 보인다.<br>` +
+      `<small>${조작("스페이스 또는 클릭", "화면을 탭")} — 그녀가 휴대폰을 옆으로 내미는 순간에만 보인다.<br>` +
       `<span style="color:#e8756c">한 번이라도 놓치면 끝난다</span> ` +
       `<span style="color:#e2c05a">${훔쳐설정.판수}번 연속</span></small>`;
     $("choices").className = "choices on";
@@ -1784,7 +1853,7 @@ MINI.균형 = (() => {
     입력(true);
     $("shellhud").className = "shellhud on";
     $("shellhud").innerHTML = `<b>회 접시를 들고 간다</b>` +
-      `<small>← → 로 받쳐서 넘어뜨리지 않는다<br>` +
+      `<small>${조작("← → 로", "화면 <b>좌·우 절반</b>을 눌러")} 받쳐서 넘어뜨리지 않는다<br>` +
       `<span style="color:#e2c05a">${균형설정.한계}도를 넘기면 쏟는다.</span></small>`;
     $("choices").className = "choices on";
     $("choices").innerHTML = `<button onclick="MINI.균형.개시()">든다</button>`;
@@ -1944,7 +2013,7 @@ MINI.가위눌림 = (() => {
     $("shellhud").className = "shellhud on";
     $("shellhud").innerHTML = `<b>몸이 움직이지 않는다</b>` +
       `<small>가슴 위에 무게가 있다. 머리카락이 얼굴에 닿는다.<br>` +
-      `<span style="color:#e2c05a">${가위설정.제한/1000}초. 연타하면 빠져나올 수 있다.</span></small>`;
+      `<span style="color:#e2c05a">${가위설정.제한/1000}초. ${조작("연타하면", "화면을 연타하면")} 빠져나올 수 있다.</span></small>`;
     $("choices").className = "choices on";
     $("choices").innerHTML = `<button onclick="MINI.가위눌림.개시()">눈을 뜬다</button>`;
     그리기(0);
@@ -2177,7 +2246,7 @@ MINI.사격 = (() => {
     $("shellhud").innerHTML = `<b>${사격설정.제한/1000}초 · ${사격설정.적수}명</b>` +
       `<small>머리 ${Math.ceil(사격설정.체력/사격설정.머리피해)}발 · ` +
       `몸통 ${Math.ceil(사격설정.체력/사격설정.몸통피해)}발 · 탄창 ${사격설정.탄창}발<br>` +
-      `<span style="color:#8b849b">누르고 있으면 연사된다. 갈길수록 총구가 들린다.</span></small>`;
+      `<span style="color:#8b849b">${조작("누르고 있으면", "화면을 누른 채로 끌면")} 연사된다. 갈길수록 총구가 들린다.</span></small>`;
     $("choices").className = "choices on";
     $("choices").innerHTML = `<button onclick="MINI.사격.개시()">시작</button>`;
   }
@@ -2521,7 +2590,9 @@ MINI.자전거 = (() => {
     G = { 구간:1, 거리:0, y:0, vy:0, 숙임:false, 길:길깔기(), 커피:100,
           t:0, 무적:0, 흔들:0, 속도:2.4, 상태:"안내" };
     입력연결();
-    안내("자전거", "↑ 또는 화면 위쪽 = 뛰어넘기<br>↓ 또는 화면 아래쪽 = 숙이기", "출발");
+    안내("자전거", 조작(
+      "↑ 또는 화면 위쪽 = 뛰어넘기<br>↓ 또는 화면 아래쪽 = 숙이기",
+      "화면 <b>위쪽</b>을 탭 = 뛰어넘기<br>화면 <b>아래쪽</b>을 누르고 있기 = 숙이기"), "출발");
   }
 
   function 안내(제목, 설명, 버튼) {
@@ -3421,6 +3492,10 @@ function 기록지우기() {
 
 function 타이틀() {
   새게임(); HUD(); 오염표시();
+  $("keys").innerHTML = 조작(
+    `클릭으로 진행 · 미니게임은 <b>방향키 / 스페이스 / 마우스</b>`,
+    `탭으로 진행 · 미니게임은 <b>화면 터치</b><br>` +
+    `<b style="color:#8b7fd0">가로 화면</b>에서 하는 것이 좋습니다`);
   $("veil").classList.remove("on");
   $("veil").innerHTML = "";
   수집그리기();
@@ -3434,6 +3509,7 @@ function 시작하기() {
 }
 
 (function 부팅() {
+  방향확인();
   const h = 강제이벤트;
 
   if (h === "타이핑") {
