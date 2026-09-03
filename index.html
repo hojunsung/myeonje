@@ -12,12 +12,15 @@
 <style>
   :root{--ink:#eeeaf5;--dim:#9b95ad;--heart:#e2607a;--gold:#d9a441;--accent:#7f6ddb;--hp:#c9524b;}
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;overscroll-behavior:none}
+  /* dvh 는 주소창이 접혔다 펴져도 실제 보이는 높이를 준다. vh 는 대비책 */
+  html,body{margin:0;height:100vh;height:100dvh;
+    overflow:hidden;overscroll-behavior:none}
   body{background:#08070c;color:var(--ink);
     font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;
     display:flex;align-items:center;justify-content:center;padding:12px}
 
-  .vn{position:relative;width:min(97vw,168vh,1560px);aspect-ratio:16/9;
+  .vn{position:relative;width:min(97vw,168vh,1560px);
+    width:min(97vw,168dvh,1560px);aspect-ratio:16/9;
     border-radius:14px;overflow:hidden;background:#000;
     box-shadow:0 30px 90px #000a;cursor:pointer;user-select:none;
     /* 연타가 더블탭 확대로 잡히지 않게 한다 */
@@ -284,7 +287,7 @@
   /* ── 좁은 화면 (폰 가로) ── 값은 전부 데스크톱 비율을 줄인 것 */
   @media (max-width: 900px) {
     body{padding:0}
-    .vn{width:100vw;border-radius:0;box-shadow:none}
+    .vn{width:min(100vw,177vh);width:min(100vw,177dvh);border-radius:0;box-shadow:none}
     .hud{padding:12px 14px;gap:8px}
     .when{padding:8px 13px}
     .when b{font-size:16px} .when span{font-size:11px}
@@ -318,7 +321,7 @@
   }
 
   /* ── 세로 화면 ── 가로로 돌려야 한다 ── */
-  .rotate{position:absolute;inset:0;z-index:70;display:none;
+  .rotate{position:fixed;inset:0;z-index:100;display:none;
     flex-direction:column;align-items:center;justify-content:center;gap:22px;
     background:#08070c;color:#a49db8;text-align:center;padding:30px}
   .rotate.on{display:flex}
@@ -371,6 +374,12 @@
 </style>
 </head>
 <body>
+<div class="rotate" id="rotate">
+  <div class="phone"></div>
+  <b>화면을 가로로 돌려주세요</b>
+  <small>가로 화면에 맞춰 그려집니다.</small>
+</div>
+
 <div class="vn" id="vn">
   <div id="bg"></div>
   <div class="stand" id="stand"></div>
@@ -418,13 +427,6 @@
   </div>
 
   <div class="taint" id="taint"></div>
-
-  <div class="rotate" id="rotate">
-    <div class="phone"></div>
-    <b>화면을 가로로 돌려주세요</b>
-    <small>이 게임은 가로 화면에 맞춰 그려집니다.<br>
-    소개팅의 마지막 장면에는 <b style="font-size:13px">글자 입력</b>이 필요합니다.</small>
-  </div>
 
   <div class="title" id="title">
     <h1>면제</h1>
