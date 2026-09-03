@@ -1,0 +1,3513 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08070c">
+<meta name="description" content="일주일 동안 다섯 사람을 만난다. 화면에 뜨는 호감도는 그가 추정한 값이다.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="면제 — 일주일">
+<meta property="og:description" content="일주일 동안 다섯 사람을 만난다. 화면에 뜨는 호감도는 그가 추정한 값이다.">
+<title>면제 — 일주일</title>
+<style>
+  :root{--ink:#eeeaf5;--dim:#9b95ad;--heart:#e2607a;--gold:#d9a441;--accent:#7f6ddb;--hp:#c9524b;}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:#08070c;color:var(--ink);
+    font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;
+    display:flex;align-items:center;justify-content:center;padding:12px}
+
+  .vn{position:relative;width:min(97vw,168vh,1560px);aspect-ratio:16/9;
+    border-radius:14px;overflow:hidden;background:#000;
+    box-shadow:0 30px 90px #000a;cursor:pointer;user-select:none}
+  .vn>svg.bg{position:absolute;inset:0;width:100%;height:100%}
+  /* 배경 컨테이너 — 안의 svg·canvas가 화면을 정확히 채우게 한다 */
+  #bg{position:absolute;inset:0;overflow:hidden}
+  #bg>svg,#bg>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+  .stand{position:absolute;right:5%;bottom:0;height:99%;
+    opacity:0;transform:translateY(28px);
+    transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.3,1)}
+  .stand.in{opacity:1;transform:translateY(0)}
+  .stand svg{height:100%;width:auto;display:block}
+
+  /* 상단 바 */
+  .hud{position:absolute;top:0;left:0;right:0;padding:24px 30px;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+    pointer-events:none;z-index:6}
+  .panel{background:#120f18e0;border:1px solid #ffffff30;border-radius:14px;
+    backdrop-filter:blur(10px);box-shadow:0 10px 34px #0008}
+  .when{padding:13px 22px;display:flex;flex-direction:column;gap:2px}
+  .when b{font-size:24px;font-weight:800;letter-spacing:.02em}
+  .when span{font-size:14px;color:#a49db8}
+
+  .stats{padding:15px 20px 16px;display:flex;flex-direction:column;gap:11px;min-width:290px}
+  .stats .money{font-size:25px;font-weight:800;color:var(--gold);text-align:right;
+    font-variant-numeric:tabular-nums;line-height:1;margin-bottom:2px}
+  .st{display:flex;align-items:center;gap:11px}
+  .st .lb{font-size:14.5px;color:#d3cbe1;width:34px;font-weight:700}
+  .st .rb{flex:1;height:13px;background:#00000080;border-radius:7px;overflow:hidden}
+  .st .rb>i{display:block;height:100%;border-radius:7px;transition:width .45s}
+  .st .vv{font-size:17px;font-weight:800;width:36px;text-align:right;
+    font-variant-numeric:tabular-nums;color:#efeaf8}
+  .st.low .vv,.st.low .lb{color:#e8756c}
+  .stats.warn{border-color:#e8756c66;box-shadow:0 0 24px #e8756c22,0 10px 34px #0008}
+
+  /* 호감도 */
+  .aff{position:absolute;top:132px;left:30px;width:322px;
+    background:#120f18d9;border:1px solid #ffffff2b;border-radius:14px;
+    padding:15px 19px 17px;backdrop-filter:blur(9px);box-shadow:0 10px 34px #0007;
+    opacity:0;transition:opacity .4s}
+  .aff.on{opacity:1}
+  .aff .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px}
+  .aff .ttl{font-size:15px;color:#ded6ec;font-weight:600}
+  .aff .num{font-size:26px;font-weight:800;color:var(--heart);text-shadow:0 0 20px #e2607a55}
+  .aff .track{height:14px;background:#00000073;border-radius:8px;overflow:hidden}
+  .aff .fill{height:100%;width:0%;border-radius:8px;
+    background:linear-gradient(90deg,#a8455f,#e2607a 65%,#f39ab0);
+    transition:width .75s cubic-bezier(.2,.9,.3,1)}
+  .aff.done{border-color:#e2c05a66;box-shadow:0 0 30px #e2c05a26,0 10px 34px #0007}
+  .aff.done .num{color:var(--gold);text-shadow:0 0 22px #d9a44166}
+  .aff.done .fill{background:linear-gradient(90deg,#a8823a,#e2c05a 65%,#f7e2a4)}
+  .aff.done .ttl::after{content:" · 확신";color:var(--gold);font-weight:800}
+  .aff.pop{animation:pop .5s}
+  @keyframes pop{0%,100%{transform:scale(1)}35%{transform:scale(1.055)}}
+
+  .gain{position:absolute;left:366px;top:138px;font-size:32px;font-weight:800;
+    text-shadow:0 2px 14px #000;opacity:0;pointer-events:none;white-space:nowrap}
+  .gain.up{color:var(--heart)} .gain.down{color:#6fb3d8}
+  .gain.go{animation:rise 1.6s ease-out}
+  @keyframes rise{0%{opacity:0;transform:translateY(10px) scale(.85)}
+    18%{opacity:1;transform:translateY(0) scale(1.12)}
+    45%{opacity:1;transform:translateY(-6px) scale(1)}
+    100%{opacity:0;transform:translateY(-34px) scale(1)}}
+  .rgain{position:absolute;right:30px;top:172px;display:flex;flex-direction:column;
+    align-items:flex-end;gap:6px;pointer-events:none}
+  .rgain span{font-size:24px;font-weight:800;text-shadow:0 2px 12px #000;opacity:0;
+    color:#e8756c;animation:rrise 1.8s ease-out}
+  .rgain span.plus{color:#82c795}
+  @keyframes rrise{0%{opacity:0;transform:translateX(14px)}
+    20%{opacity:1;transform:translateX(0)}
+    65%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+
+  .reason{position:absolute;left:30px;top:236px;width:344px;font-size:17px;line-height:1.7;
+    color:#f5c3ce;font-weight:500;text-shadow:0 2px 14px #000;opacity:0;transition:opacity .45s}
+  .reason.show{opacity:1}
+
+  /* 대사창 */
+  .box{position:absolute;left:3%;right:3%;bottom:3.5%;
+    background:linear-gradient(#15121eee,#0c0a12f7);
+    border:1px solid #ffffff2b;border-radius:16px;
+    padding:26px 36px 30px;min-height:28%;backdrop-filter:blur(11px);
+    box-shadow:0 -8px 44px #0009}
+  .box.hide{display:none}
+  .name{position:absolute;top:-19px;left:30px;
+    background:linear-gradient(#33294a,#1e1930);border:1px solid #ffffff33;
+    border-radius:10px;padding:8px 24px;font-size:18px;font-weight:700;box-shadow:0 6px 20px #0008}
+  .name.hidden{display:none}
+  .line{font-size:23px;line-height:1.95;min-height:3.4em}
+  .line.think{color:#c2bbd2;font-style:italic}
+  .line.narr{color:#efeaf8}
+  .line.say{color:#fff}
+  .line.sys{color:var(--gold);font-weight:700}
+  .next{position:absolute;right:32px;bottom:20px;font-size:15px;color:#a29ab5;animation:blink 1.5s infinite}
+  @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
+
+  .choices{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:66%;display:none;flex-direction:column;gap:11px;max-height:78%;
+    overflow-y:auto;overflow-x:hidden;z-index:20;
+    scrollbar-width:none;-ms-overflow-style:none}
+  .choices::-webkit-scrollbar{display:none}
+  .choices.on{display:flex}
+  .choices.final{top:60%}
+  .choices button{background:#191524e8;color:var(--ink);border:1px solid #ffffff2e;
+    border-radius:12px;padding:18px 24px;font:inherit;font-size:20px;text-align:left;
+    cursor:pointer;backdrop-filter:blur(7px);transition:.16s;box-shadow:0 8px 26px #0007}
+  .choices button:hover{border-color:var(--heart);background:#241a28ee;transform:translateX(5px)}
+  .choices small{display:block;margin-top:5px;font-size:15px;color:#a49db8}
+  .choices button.lock{opacity:.4;cursor:not-allowed;border-color:#ffffff18}
+  .choices button.lock:hover{transform:none;border-color:#ffffff18;background:#191524e8}
+  .choices button.ready{border-color:var(--heart);box-shadow:0 0 26px #e2607a33,0 8px 26px #0007}
+  .choices button.ready small{color:var(--heart);font-weight:700}
+  .cost{margin-top:9px;display:block}
+  .cost i{display:inline-block;font-style:normal;margin-right:7px;padding:3px 11px;
+    border-radius:20px;font-size:14px;font-weight:700;
+    background:#2e2434;color:#e39b92;border:1px solid #56394a}
+  .cost i.plus{background:#22332a;color:#82c795;border-color:#33513e}
+  .choices button.poor{opacity:.4;cursor:not-allowed}
+  .choices button.poor:hover{transform:none;border-color:#ffffff2e;background:#191524e8}
+
+  /* 중얼거릴 때마다 세상이 조금씩 탁해진다 */
+  .vn[data-오염="1"] #bg{filter:saturate(.82) contrast(1.05)}
+  .vn[data-오염="2"] #bg{filter:saturate(.55) contrast(1.14) hue-rotate(-8deg)}
+  .vn[data-오염="3"] #bg{filter:saturate(.28) contrast(1.24) hue-rotate(-15deg) brightness(.88)}
+  /* 캔버스 미니게임 중에는 본편 HUD를 감춘다 */
+  .vn.미니 .hud, .vn.미니 .aff, .vn.미니 .gain,
+  .vn.미니 .rgain, .vn.미니 .reason, .vn.미니 .stand{display:none !important}
+
+  /* 베손 찾기 */
+  .shell{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);
+    width:min(74%,660px);height:38%;display:none;z-index:6}
+  .shell.on{display:block}
+  .spot{position:absolute;bottom:0;width:29%;height:100%;
+    transition:left .28s cubic-bezier(.4,0,.3,1);cursor:pointer}
+  .spot svg{width:100%;height:100%;display:block;
+    filter:drop-shadow(0 10px 18px #000a);transition:transform .18s,filter .18s}
+  .spot:hover svg{transform:translateY(-7px);filter:drop-shadow(0 14px 22px #000c)}
+  .shell.잠금 .spot{pointer-events:none}
+  .shell.잠금 .spot:hover svg{transform:none}
+  .spot .머리{opacity:0;transform:translateY(22px);transition:opacity .3s,transform .4s}
+  .spot.열림 .머리{opacity:1;transform:translateY(0)}
+  .spot .뚜껑{transform-origin:20px 66px;transition:transform .4s}
+  .spot.열림 .뚜껑{transform:rotate(-28deg) translateY(-3px)}
+  .spot.열림 svg{filter:drop-shadow(0 0 26px #e2c05a70) drop-shadow(0 10px 18px #000a)}
+  .spot.열림:hover svg{transform:none}
+  .shellhud{position:absolute;left:50%;top:22%;transform:translateX(-50%);
+    background:#120f18e0;border:1px solid #ffffff30;border-radius:12px;
+    padding:11px 22px;backdrop-filter:blur(9px);text-align:center;
+    display:none;z-index:7;white-space:nowrap}
+  .shellhud.on{display:block}
+  .shellhud b{font-size:19px;font-weight:800;letter-spacing:.02em}
+  .shellhud small{display:block;margin-top:4px;font-size:14px;color:#8b849b}
+
+  /* 최종 미니게임 직전 연출 */
+  .finale{position:absolute;inset:0;z-index:30;display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:0;
+    background:#05050ae8;opacity:0;transition:opacity .45s}
+  .finale.on{display:flex;opacity:1}
+  .finale .who{font-size:16px;letter-spacing:.34em;color:#8b849b;margin-bottom:22px;
+    opacity:0;transform:translateY(8px)}
+  .finale .who.보임{animation:떠오름 .6s forwards}
+  .finale .lab{font-size:12px;letter-spacing:.42em;color:#6f6880;margin-bottom:10px;
+    opacity:0;transform:translateY(6px)}
+  .finale .lab.보임{animation:떠오름 .5s forwards}
+  .finale .track{width:min(46%,420px);height:18px;background:#00000080;
+    border:1px solid #ffffff26;border-radius:10px;overflow:hidden;opacity:0;
+    transition:border-color .35s,box-shadow .35s}
+  .finale .track.보임{animation:떠오름 .5s forwards}
+  .finale .track.가득{border-color:#ffe9a8aa;box-shadow:0 0 34px #e2c05a66}
+  .finale .fill{height:100%;width:0;border-radius:10px;
+    background:linear-gradient(90deg,#8a6a2e,#e2c05a 60%,#fff0c0);
+    box-shadow:0 0 26px #e2c05a88}
+  .finale .fill.가득{background:linear-gradient(90deg,#e2c05a,#fff6d8 55%,#ffffff);
+    box-shadow:0 0 44px #ffe9a8;animation:섬광 .6s}
+  .finale .pct{margin-top:16px;font-size:44px;font-weight:800;color:#e2c05a;
+    text-shadow:0 0 34px #e2c05a55;font-variant-numeric:tabular-nums;opacity:0;
+    transition:font-size .32s cubic-bezier(.2,1.5,.4,1),color .32s,text-shadow .32s}
+  .finale .pct.보임{animation:떠오름 .4s forwards}
+  .finale .pct.가득{font-size:66px;color:#fff4d4;text-shadow:0 0 52px #ffd76e,0 0 14px #fff8e0;
+    opacity:1;transform:none;animation:쿵 .62s}
+  @keyframes 쿵{0%{transform:scale(1)}26%{transform:scale(1.26)}55%{transform:scale(.97)}100%{transform:scale(1)}}
+  @keyframes 섬광{0%{filter:brightness(2.6)}100%{filter:brightness(1)}}
+  .finale .say{margin-top:26px;font-size:22px;color:#efeaf8;font-style:italic;
+    opacity:0;text-align:center;padding:0 30px}
+  .finale .say.보임{animation:떠오름 .7s forwards}
+  .finale .once{margin-top:16px;font-size:15px;letter-spacing:.24em;color:#e2607a;
+    opacity:0}
+  .finale .once.보임{animation:맥박 1.4s forwards}
+  @keyframes 떠오름{to{opacity:1;transform:translateY(0)}}
+  @keyframes 맥박{0%{opacity:0}25%{opacity:1}45%{opacity:.45}65%{opacity:1}100%{opacity:.9}}
+
+  /* 타이핑 (소개팅 최종 미니게임) */
+  .typing{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
+    width:min(68%,620px);background:#120f18f0;border:1px solid #ffffff33;border-radius:16px;
+    padding:26px 30px 28px;backdrop-filter:blur(11px);box-shadow:0 14px 44px #000b;
+    display:none;z-index:14;text-align:center}
+  .typing.on{display:block}
+  .typing .said{font-size:27px;font-weight:800;color:#f6eefc;margin-bottom:6px}
+  .typing .hint{font-size:15px;color:#8b849b;margin-bottom:20px}
+  .typing .hint b{color:#e2607a}
+  .typing input{width:100%;padding:15px 18px;font:inherit;font-size:25px;font-weight:700;
+    text-align:center;background:#0b0a12;border:2px solid #3a3548;border-radius:10px;
+    color:#f6eefc;outline:none;letter-spacing:.06em}
+  .typing input:focus{border-color:#e2607a}
+  .typing.틀림 input{border-color:#e8756c;animation:흔들 .3s}
+  @keyframes 흔들{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+  .typing .bar{margin-top:18px;height:10px;background:#00000073;border-radius:6px;overflow:hidden}
+  .typing .bar>i{display:block;height:100%;background:#e2607a;border-radius:6px}
+  .typing .left{margin-top:9px;font-size:14px;color:#8b849b;font-variant-numeric:tabular-nums}
+
+  /* 기다리기 미니게임 게이지 */
+  .waitbar{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
+    width:min(52%,460px);background:#120f18e0;border:1px solid #ffffff30;border-radius:14px;
+    padding:16px 22px 18px;backdrop-filter:blur(10px);box-shadow:0 10px 34px #0008;
+    display:none;z-index:6}
+  .waitbar.on{display:block}
+  .waitbar .wtop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px}
+  .waitbar .wl{font-size:15px;color:#ded6ec;font-weight:600;letter-spacing:.02em}
+  .waitbar .wv{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+  .waitbar .wtrack{height:13px;background:#00000073;border-radius:7px;overflow:hidden}
+  .waitbar .wfill{height:100%;width:0%;border-radius:7px;transition:width .35s,background .6s}
+  .waitbar .wnote{margin-top:9px;font-size:13px;color:#6f6982;text-align:right}
+
+  .taint{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.6s;z-index:3;
+    background:radial-gradient(circle at 50% 44%, transparent 26%, #2a0912 100%)}
+  .taint.on1{opacity:.30} .taint.on2{opacity:.55} .taint.on3{opacity:.8}
+  .taint.on2,.taint.on3{animation:숨 7s ease-in-out infinite}
+  @keyframes 숨{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+  .veil{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .7s;z-index:10}
+  .veil.on{opacity:1;pointer-events:auto}
+  .card{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:16px;text-align:center;padding:40px;color:#fff}
+  .card b{font-size:44px;font-weight:800}
+  .card .sub{font-size:19px;color:#a49db8;line-height:2;max-width:760px}
+
+  /* 하루 정산 */
+  .day{display:flex;flex-direction:column;align-items:center;line-height:1.5}
+  .day .last{font-size:13px;letter-spacing:.34em;font-weight:800;color:#e2607a;
+    padding:5px 14px;border:1px solid #6b2f3c;border-radius:3px;margin-bottom:20px}
+  .day .body{font-size:15px;color:#7db98d;letter-spacing:.03em}
+  .day .rule{width:44px;height:1px;background:#3a3548;margin:20px 0}
+  .day .leadin{font-size:12px;letter-spacing:.26em;color:#6f6982}
+  .day .rate{font-size:38px;font-weight:800;color:#c9a8a4;margin-top:4px;
+    font-variant-numeric:tabular-nums;line-height:1.1}
+  .day .note{font-size:13px;color:#635e78;margin-top:5px}
+  .day .rows{margin-top:18px;display:grid;grid-template-columns:auto 60px 46px;
+    gap:9px 20px;font-size:15px;align-items:baseline}
+  .day .rows .n{color:#8b849b;text-align:left}
+  .day .rows .v{color:#e2dcf0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+  .day .rows .d{color:#8a6a67;text-align:right;font-variant-numeric:tabular-nums}
+  .day .skip{font-size:17px;color:#8b849b}
+  .day .skip small{display:block;font-size:14px;color:#635e78;margin-top:9px}
+  .endtag{display:flex;align-items:center;gap:16px;
+    font-size:16px;letter-spacing:.42em;font-weight:800;margin-bottom:4px}
+  .endtag::before,.endtag::after{content:"";height:1px;width:54px}
+  .endtag.happy{color:#f0b45e}
+  .endtag.happy::before,.endtag.happy::after{background:#7a5c2e}
+  .endtag.bad{color:#7f8aa3}
+  .endtag.bad::before,.endtag.bad::after{background:#3a4152}
+  .endno{letter-spacing:.1em;font-weight:700;opacity:.62;font-size:14px}
+  .새엔딩{margin-left:12px;font-size:11px;letter-spacing:.2em;color:#0d0b12;
+    background:#f0b45e;padding:3px 8px;border-radius:3px;vertical-align:middle}
+
+  /* 타이틀 */
+  .title{position:absolute;inset:0;z-index:60;display:none;flex-direction:column;
+    align-items:center;justify-content:center;padding:36px 24px;overflow-y:auto;
+    background:radial-gradient(ellipse at 50% 32%,#181322 0%,#08070c 68%)}
+  .title.on{display:flex}
+  .title h1{margin:0;font-size:clamp(38px,7vw,62px);font-weight:900;letter-spacing:.06em;
+    background:linear-gradient(180deg,#fff 20%,#b9a8d8 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .title .week{margin-top:6px;font-size:15px;letter-spacing:.52em;color:#7f6ddb;font-weight:700}
+  .title .line{width:64px;height:1px;background:#3a3548;margin:26px 0}
+  .title .pitch{font-size:16px;line-height:2;color:#a49db8;text-align:center;max-width:520px}
+  .title .pitch b{color:#e2607a;font-weight:700}
+  .title .go{margin-top:30px;padding:16px 54px;font-size:20px;font-weight:800;letter-spacing:.1em;
+    border-radius:11px;cursor:pointer;color:#0d0b12;border:none;
+    background:linear-gradient(180deg,#f5d089,#d9a441);box-shadow:0 8px 26px #d9a44140}
+  .title .go:hover{filter:brightness(1.08)}
+  .title .keys{margin-top:20px;font-size:13px;color:#635e78;letter-spacing:.04em;text-align:center}
+  .title .keys b{color:#8b849b;font-weight:600}
+
+  /* 엔딩 수집 */
+  .coll{margin-top:34px;width:100%;max-width:560px}
+  .coll .head{display:flex;align-items:baseline;justify-content:center;gap:10px;
+    font-size:12px;letter-spacing:.3em;color:#6f6982;margin-bottom:14px}
+  .coll .head b{font-size:17px;letter-spacing:.06em;color:#f0b45e;font-variant-numeric:tabular-nums}
+  .coll .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:7px}
+  .coll .cell{border:1px solid #26222f;border-radius:6px;padding:8px 6px;text-align:center;
+    font-size:11px;color:#4a4557;background:#0e0c14;line-height:1.6}
+  .coll .cell .num{display:block;font-size:13px;font-weight:800;color:#3a3548}
+  .coll .cell.got{background:#161122;border-color:#4a3a24}
+  .coll .cell.got .num{color:#f0b45e}
+  .coll .cell.got{color:#a49db8}
+  .coll .cell.got.bad{background:#101319;border-color:#2f3644}
+  .coll .cell.got.bad .num{color:#8fa0bd}
+  .coll .reset{margin-top:14px;text-align:center}
+  .coll .reset button{background:none;border:none;color:#4a4557;font-size:12px;
+    cursor:pointer;text-decoration:underline;padding:6px}
+  .coll .reset button:hover{color:#8b849b}
+</style>
+</head>
+<body>
+<div class="vn" id="vn">
+  <div id="bg"></div>
+  <div class="stand" id="stand"></div>
+
+  <div class="hud">
+    <div class="panel when"><b id="wDay"></b><span id="wWhere"></span></div>
+    <div class="panel stats" id="stats">
+      <div class="money" id="money"></div>
+      <div class="st" id="stMind"><span class="lb">정신</span>
+        <span class="rb"><i id="rMind"></i></span><span class="vv" id="vMind"></span></div>
+      <div class="st" id="stBody"><span class="lb">체력</span>
+        <span class="rb"><i id="rBody"></i></span><span class="vv" id="vBody"></span></div>
+    </div>
+  </div>
+
+  <div class="aff" id="aff">
+    <div class="top"><span class="ttl" id="affName">호감도</span><span class="num" id="affNum">0%</span></div>
+    <div class="track"><div class="fill" id="affFill"></div></div>
+  </div>
+  <div class="finale" id="finale">
+    <div class="who" id="fnWho"></div>
+    <div class="lab" id="fnLab">호감도</div>
+    <div class="track" id="fnTrack"><div class="fill" id="fnFill"></div></div>
+    <div class="pct" id="fnPct">0%</div>
+    <div class="say" id="fnSay"></div>
+    <div class="once" id="fnOnce">기회는 한 번이다</div>
+  </div>
+
+  <div class="typing" id="typing">
+    <div class="said" id="tySaid"></div>
+    <div class="hint" id="tyHint"></div>
+    <input id="tyInput" type="text" autocomplete="off" spellcheck="false">
+    <div class="bar"><i id="tyBar"></i></div>
+    <div class="left" id="tyLeft"></div>
+  </div>
+
+  <div class="shellhud" id="shellhud"></div>
+  <div class="shell" id="shell"></div>
+
+  <div class="waitbar" id="waitbar">
+    <div class="wtop"><span class="wl">기다린 시간</span><span class="wv" id="wv"></span></div>
+    <div class="wtrack"><div class="wfill" id="wfill"></div></div>
+    <div class="wnote" id="wnote"></div>
+  </div>
+
+  <div class="taint" id="taint"></div>
+
+  <div class="title" id="title">
+    <h1>면제</h1>
+    <div class="week">A WEEK</div>
+    <div class="line"></div>
+    <div class="pitch">
+      일주일 동안 다섯 사람을 만난다.<br>
+      화면에 뜨는 <b>호감도</b>는 그가 추정한 값이다.<br>
+      마지막 날, 100%가 된 사람 중에서 고른다.
+    </div>
+    <button class="go" onclick="시작하기()">시작</button>
+    <div class="keys">
+      클릭으로 진행 · 미니게임은 <b>방향키 / 스페이스 / 마우스</b><br>
+      한 번에 다섯 명을 다 밀어붙일 수는 없다
+    </div>
+    <div class="coll" id="coll"></div>
+  </div>
+  <div class="gain" id="gain"></div>
+  <div class="rgain" id="rgain"></div>
+  <div class="reason" id="reason"></div>
+
+  <div class="choices" id="choices"></div>
+
+  <div class="box" id="box">
+    <div class="name hidden" id="name"></div>
+    <div class="line" id="line"></div>
+    <div class="next" id="next">▼ 클릭</div>
+  </div>
+
+  <div class="veil" id="veil"></div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   PART 1. 아트
+   ══════════════════════════════════════════════════════════════ */
+const BG = {
+elevator:`<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs>
+<linearGradient id="ew" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4a52"/><stop offset=".45" stop-color="#2b2b33"/><stop offset="1" stop-color="#141419"/></linearGradient>
+<radialGradient id="vg" cx="50%" cy="42%" r="72%"><stop offset="55%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".82"/></radialGradient></defs>
+<rect width="1600" height="900" fill="url(#ew)"/>
+<rect x="430" y="0" width="740" height="34" fill="#fff6de" opacity=".8"/>
+<g stroke="#0000004d" stroke-width="3"><line x1="250" y1="40" x2="250" y2="700"/><line x1="620" y1="30" x2="620" y2="700"/><line x1="990" y1="30" x2="990" y2="700"/><line x1="1360" y1="40" x2="1360" y2="700"/></g>
+<rect x="640" y="120" width="330" height="470" fill="#20202a" opacity=".85" stroke="#ffffff1c" stroke-width="2"/>
+<rect x="60" y="470" width="520" height="11" rx="5" fill="#5a5a66"/><rect x="1020" y="470" width="520" height="11" rx="5" fill="#5a5a66"/>
+<rect x="96" y="300" width="96" height="250" rx="10" fill="#33333d" stroke="#00000055"/>
+<rect x="108" y="316" width="72" height="40" rx="6" fill="#0e0e13"/>
+<text x="144" y="345" font-size="27" font-weight="700" fill="#ff8a4a" text-anchor="middle" font-family="monospace">3</text>
+<circle cx="130" cy="440" r="14" fill="#3d2a12" stroke="#ffb45e" stroke-width="2"/>
+<rect x="0" y="700" width="1600" height="200" fill="#111116"/><rect width="1600" height="900" fill="url(#vg)"/></svg>`,
+
+hoetjip:`<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs>
+<linearGradient id="hw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3b46"/><stop offset="1" stop-color="#0f1519"/></linearGradient>
+<linearGradient id="tank" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fd0e0" stop-opacity=".55"/><stop offset="1" stop-color="#1a5a68" stop-opacity=".75"/></linearGradient>
+<radialGradient id="vg2" cx="50%" cy="45%" r="72%"><stop offset="52%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".84"/></radialGradient></defs>
+<rect width="1600" height="900" fill="url(#hw)"/>
+<g fill="#0d1418"><rect x="0" y="0" width="1600" height="120"/></g>
+<g><rect x="120" y="150" width="420" height="300" rx="8" fill="url(#tank)" stroke="#0c1a1f" stroke-width="6"/>
+<rect x="600" y="150" width="420" height="300" rx="8" fill="url(#tank)" stroke="#0c1a1f" stroke-width="6"/>
+<g fill="#0e2a33" opacity=".8"><ellipse cx="240" cy="280" rx="34" ry="12"/><ellipse cx="380" cy="350" rx="30" ry="10"/><ellipse cx="700" cy="300" rx="34" ry="12"/><ellipse cx="880" cy="240" rx="28" ry="10"/></g>
+<g fill="#8fe6f5" opacity=".18"><rect x="140" y="160" width="60" height="280"/><rect x="620" y="160" width="60" height="280"/></g></g>
+<g fill="#c8b48a" opacity=".18"><rect x="1080" y="150" width="120" height="46" rx="4"/><rect x="1220" y="150" width="120" height="46" rx="4"/><rect x="1080" y="210" width="120" height="46" rx="4"/><rect x="1220" y="210" width="120" height="46" rx="4"/></g>
+<rect x="0" y="560" width="1600" height="40" fill="#2c2118"/><rect x="0" y="600" width="1600" height="300" fill="#171009"/>
+<rect x="0" y="560" width="1600" height="8" fill="#5a4630"/>
+<rect width="1600" height="900" fill="url(#vg2)"/></svg>`,
+
+sogae:`<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs>
+<linearGradient id="cw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b2e2a"/><stop offset="1" stop-color="#15100e"/></linearGradient>
+<radialGradient id="lamp" cx="50%" cy="0%" r="80%"><stop offset="0" stop-color="#ffd9a0" stop-opacity=".55"/><stop offset="1" stop-color="#ffd9a0" stop-opacity="0"/></radialGradient>
+<radialGradient id="vg3" cx="50%" cy="45%" r="70%"><stop offset="50%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".85"/></radialGradient></defs>
+<rect width="1600" height="900" fill="url(#cw)"/>
+<g fill="#0f0b09"><rect x="1180" y="80" width="380" height="470" rx="6"/></g>
+<g fill="#2a1f1a" opacity=".9"><rect x="1200" y="100" width="160" height="200" rx="4"/><rect x="1380" y="100" width="160" height="200" rx="4"/><rect x="1200" y="320" width="160" height="200" rx="4"/><rect x="1380" y="320" width="160" height="200" rx="4"/></g>
+<ellipse cx="440" cy="120" rx="300" ry="200" fill="url(#lamp)"/>
+<g><rect x="416" y="0" width="6" height="120" fill="#0a0705"/><path d="M370 120h100l24 44h-148z" fill="#0a0705"/><ellipse cx="420" cy="168" rx="30" ry="9" fill="#ffcf8c" opacity=".8"/></g>
+<rect x="0" y="620" width="1600" height="280" fill="#120c0a"/>
+<ellipse cx="430" cy="628" rx="330" ry="52" fill="#2b1e17"/><ellipse cx="430" cy="620" rx="330" ry="52" fill="#3a2a20"/>
+<g fill="#0c0806"><ellipse cx="360" cy="600" rx="52" ry="16"/><ellipse cx="520" cy="612" rx="40" ry="13"/></g>
+<rect width="1600" height="900" fill="url(#vg3)"/></svg>`,
+
+고백:`<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs>
+<linearGradient id="gb1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#141a2e"/><stop offset=".55" stop-color="#232b44"/><stop offset="1" stop-color="#2e3550"/></linearGradient>
+<radialGradient id="gb2" cx="50%" cy="0%" r="90%"><stop offset="0" stop-color="#ffd9a0" stop-opacity=".55"/><stop offset=".55" stop-color="#ffc98a" stop-opacity=".14"/><stop offset="1" stop-color="#ffc98a" stop-opacity="0"/></radialGradient>
+<linearGradient id="gb3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2f42"/><stop offset="1" stop-color="#171b28"/></linearGradient>
+<radialGradient id="gb4" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffcf94" stop-opacity=".30"/><stop offset="1" stop-color="#ffcf94" stop-opacity="0"/></radialGradient></defs>
+<rect width="1600" height="900" fill="url(#gb1)"/>
+<g fill="#10141f"><rect x="0" y="150" width="210" height="500"/><rect x="228" y="86" width="150" height="564"/>
+<rect x="396" y="212" width="176" height="438"/><rect x="1040" y="120" width="188" height="530"/>
+<rect x="1248" y="196" width="164" height="454"/><rect x="1430" y="104" width="170" height="546"/></g>
+<g fill="#f0c98a" opacity=".34"><rect x="42" y="196" width="20" height="26"/><rect x="104" y="262" width="20" height="26"/>
+<rect x="262" y="140" width="20" height="26"/><rect x="318" y="228" width="20" height="26"/><rect x="266" y="330" width="20" height="26"/>
+<rect x="434" y="264" width="20" height="26"/><rect x="500" y="360" width="20" height="26"/>
+<rect x="1074" y="176" width="20" height="26"/><rect x="1160" y="268" width="20" height="26"/><rect x="1082" y="372" width="20" height="26"/>
+<rect x="1288" y="248" width="20" height="26"/><rect x="1470" y="160" width="20" height="26"/><rect x="1526" y="286" width="20" height="26"/></g>
+<g stroke="#0d111a" stroke-width="7" fill="none"><path d="M690 650V236"/><path d="M690 236q0-46 46-46h44"/></g>
+<ellipse cx="800" cy="196" rx="30" ry="17" fill="#ffe3b4"/>
+<ellipse cx="800" cy="196" rx="62" ry="42" fill="#ffd7a0" opacity=".34"/>
+<path d="M800 200 L1010 650 L590 650 Z" fill="url(#gb2)"/>
+<g fill="#0d111a"><path d="M1352 650V430q-42-10-42-58 0-52 42-72 40 20 40 72 0 48-40 58z"/>
+<path d="M262 650V486q-32-8-32-44 0-40 32-56 32 16 32 56 0 36-32 44z"/></g>
+<rect x="0" y="650" width="1600" height="250" fill="url(#gb3)"/>
+<ellipse cx="800" cy="668" rx="270" ry="52" fill="url(#gb4)"/>
+<g stroke="#3c4460" stroke-width="3" opacity=".45"><path d="M0 700h1600"/><path d="M0 786h1600"/></g>
+<rect x="762" y="650" width="76" height="250" fill="#ffd7a0" opacity=".09"/>
+<rect x="0" y="640" width="1600" height="12" fill="#0a0d15"/></svg>`,
+game:`<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs>
+<linearGradient id="rm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#191428"/><stop offset="1" stop-color="#07060c"/></linearGradient>
+<linearGradient id="scr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2e4a3a"/><stop offset=".6" stop-color="#1b2f26"/><stop offset="1" stop-color="#101d18"/></linearGradient>
+<radialGradient id="mon" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#7fd8a8" stop-opacity=".28"/><stop offset="1" stop-color="#7fd8a8" stop-opacity="0"/></radialGradient></defs>
+<rect width="1600" height="900" fill="url(#rm)"/>
+<ellipse cx="800" cy="380" rx="700" ry="450" fill="url(#mon)"/>
+<rect x="0" y="700" width="1600" height="200" fill="#0a0810"/>
+<rect x="420" y="150" width="760" height="430" rx="10" fill="#08070c" stroke="#2b2740" stroke-width="8"/>
+<rect x="444" y="174" width="712" height="382" fill="url(#scr)"/>
+<g fill="#0e1a14" opacity=".85"><rect x="470" y="200" width="240" height="14" rx="7"/><rect x="470" y="228" width="180" height="10" rx="5"/></g>
+<g fill="#9fe8c0" opacity=".5"><rect x="470" y="480" width="120" height="10" rx="5"/><rect x="470" y="500" width="90" height="8" rx="4"/></g>
+<rect x="1010" y="200" width="122" height="70" rx="6" fill="#0c1712" stroke="#3d6a52"/>
+<rect x="740" y="580" width="120" height="24" fill="#15121f"/><rect x="660" y="604" width="280" height="14" rx="4" fill="#1c1830"/>
+<rect x="560" y="640" width="480" height="26" rx="6" fill="#141122"/>
+<g fill="#241f3a"><rect x="120" y="380" width="150" height="320" rx="6"/><rect x="1330" y="420" width="160" height="280" rx="6"/></g></svg>`,
+
+night:`<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs>
+<linearGradient id="nr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14101f"/><stop offset="1" stop-color="#050409"/></linearGradient>
+<radialGradient id="moon" cx="78%" cy="18%" r="42%"><stop offset="0" stop-color="#b9c6ee" stop-opacity=".3"/><stop offset="1" stop-color="#b9c6ee" stop-opacity="0"/></radialGradient>
+<radialGradient id="vg5" cx="50%" cy="48%" r="62%"><stop offset="34%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".93"/></radialGradient></defs>
+<rect width="1600" height="900" fill="url(#nr)"/>
+<rect x="1080" y="90" width="330" height="280" fill="#2b3555" opacity=".5"/>
+<g stroke="#08060e" stroke-width="9"><line x1="1245" y1="90" x2="1245" y2="370"/><line x1="1080" y1="230" x2="1410" y2="230"/></g>
+<ellipse cx="1245" cy="230" rx="420" ry="360" fill="url(#moon)"/>
+<rect x="0" y="640" width="1600" height="260" fill="#040308"/>
+<rect x="180" y="540" width="620" height="102" rx="6" fill="#0d0917"/>
+<rect x="200" y="500" width="580" height="44" rx="8" fill="#120d1e"/>
+<g fill="#0a0713"><rect x="900" y="470" width="260" height="172" rx="5"/></g>
+<rect width="1600" height="900" fill="url(#vg5)"/></svg>`,
+
+street:`<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs>
+<linearGradient id="st" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2740"/><stop offset="1" stop-color="#0b0d16"/></linearGradient>
+<radialGradient id="vg6" cx="50%" cy="45%" r="72%"><stop offset="52%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".8"/></radialGradient></defs>
+<rect width="1600" height="900" fill="url(#st)"/>
+<g fill="#0a0c14"><rect x="0" y="240" width="240" height="420"/><rect x="260" y="160" width="190" height="500"/><rect x="470" y="300" width="280" height="360"/><rect x="1100" y="200" width="220" height="460"/><rect x="1340" y="280" width="260" height="380"/></g>
+<g fill="#e8c46a" opacity=".45"><rect x="295" y="215" width="28" height="34"/><rect x="365" y="295" width="28" height="34"/><rect x="525" y="365" width="28" height="34"/><rect x="640" y="455" width="28" height="34"/><rect x="1145" y="260" width="28" height="34"/><rect x="1405" y="375" width="28" height="34"/></g>
+<rect x="0" y="646" width="1600" height="254" fill="#07080e"/>
+<rect x="895" y="176" width="12" height="470" fill="#05060a"/><ellipse cx="900" cy="176" rx="42" ry="22" fill="#f2d58a" opacity=".85"/>
+<ellipse cx="900" cy="380" rx="200" ry="245" fill="#f2d58a" opacity=".07"/>
+<rect width="1600" height="900" fill="url(#vg6)"/></svg>`
+};
+
+/* 실루엣 — 머리 모양만 바꿔 인물을 구분한다 */
+function 실루엣(hair, extra) {
+  const body = `
+    <path d="M212 240c-38 2-66 12-86 30-20 18-31 46-36 84l-13 100-12 170h294l-12-170-13-100c-5-38-16-66-36-84-20-18-48-28-86-30z"/>
+    <path d="M184 172h56v92h-56z"/>
+    <ellipse cx="212" cy="130" rx="62" ry="72"/>
+    ${hair}
+    <path d="M92 340c-16 38-22 84-16 128l10 78 40-6-13-82c-5-38-2-76 9-108z"/>
+    <path d="M332 340c16 38 22 84 16 128l-10 78-40-6 13-82c5-38 2-76-9-108z"/>`;
+  return `<svg viewBox="-60 0 540 660" preserveAspectRatio="xMidYMax meet"><defs>
+    <linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b1a24"/><stop offset=".5" stop-color="#111017"/><stop offset="1" stop-color="#0a0910"/></linearGradient>
+    <linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffe0b4"/><stop offset=".45" stop-color="#d8ab7e"/><stop offset="1" stop-color="#7d6eb0"/></linearGradient>
+    <filter id="sf" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="bl" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="34"/></filter>
+    <filter id="wb" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
+    <g id="fb">${body}</g><clipPath id="fc">${body}</clipPath></defs>
+    <g transform="translate(46,30) scale(1.04)" opacity=".5" filter="url(#wb)" fill="#000"><use href="#fb"/></g>
+    <ellipse cx="206" cy="210" rx="176" ry="230" fill="#f0cfa0" opacity=".15" filter="url(#bl)"/>
+    <g fill="url(#fg)"><use href="#fb"/></g>
+    <g clip-path="url(#fc)"><rect x="-60" y="0" width="540" height="660" fill="url(#rg)" opacity=".85"/>
+      <g transform="translate(9,5)" fill="url(#fg)"><use href="#fb"/></g></g>
+    ${extra || ""}
+    <ellipse cx="212" cy="648" rx="150" ry="26" fill="#000" opacity=".55" filter="url(#sf)"/></svg>`;
+}
+
+const 머리 = {
+  묶음: `<path d="M212 50c-41 0-68 29-72 68-2 17 0 32 3 42 2-31 8-54 21-66 12-12 29-17 48-17s36 5 48 17c13 12 19 35 21 66 3-10 5-25 3-42-4-39-31-68-72-68z"/>
+        <path d="M272 84c24 8 40 28 44 54 5 32-6 66-24 92-7 10-18 13-25 7-7-6-6-17 0-26 14-22 22-48 18-70-3-18-9-30-21-38z"/>`,
+  단발: `<path d="M212 48c-44 0-74 30-76 72-1 26 2 52 8 74l30-6c-6-20-9-42-8-62 2-30 20-46 46-46s44 16 46 46c1 20-2 42-8 62l30 6c6-22 9-48 8-74-2-42-32-72-76-72z"/>`,
+  장발: `<path d="M212 46c-45 0-76 31-78 74-1 34 3 76 10 118l34-8c-7-38-11-76-10-106 2-32 20-50 44-50s42 18 44 50c1 30-3 68-10 106l34 8c7-42 11-84 10-118-2-43-33-74-78-74z"/>`
+};
+const 소품 = {
+  가방끈: `<path d="M256 258l-100 216 16 7 100-216z" fill="#0b0a11" opacity=".9"/>`,
+  앞치마: `<path d="M212 292c-30 0-52 6-64 14l-10 300h148l-10-300c-12-8-34-14-64-14z" fill="#0b0a11" opacity=".55"/>`,
+  코트:   `<path d="M212 250l-6 360h12l-6-360z" fill="#000" opacity=".5"/>`
+};
+
+/* ══════════════════════════════════════════════════════════════
+   PART 2. 데이터 — 여기만 채우면 게임이 커집니다
+   ══════════════════════════════════════════════════════════════ */
+
+const 설정 = {
+  시작돈: 100000, 최대정신: 100, 시작정신: 100, 최대체력: 100, 시작체력: 100,
+  총일수: 7, 이벤트확률: .62,
+  하루이벤트: 2,     // 하루에 뜨는 랜덤 이벤트 최대 개수
+  // 감쇠는 잠들 때 남은 체력에 따라 달라진다. 지쳐서 잠들수록 더 많이 샌다.
+  감쇠최소: 0.10,    // 체력을 100 남기고 잠들었을 때
+  감쇠최대: 0.23,    // 체력을 0까지 쓰고 잠들었을 때
+};
+/* 체력은 하루치 행동력이다 — 새 날이 시작되면 100으로 완전히 돌아온다.
+   정신은 돌아오지 않는다. 일주일 내내 누적되는 유일한 자원. */
+
+/* ── 슬롯: 시간대마다 그녀 한 명 ── */
+const 슬롯 = [
+  { 때: "아침", 곳: "복싱장 건물 엘리베이터", 그녀: "엘리베이터", bg: "elevator" },
+  { 때: "낮",   곳: "횟집",                   그녀: "횟집",       bg: "hoetjip"  },
+  { 때: "저녁", 곳: "소개받은 자리",           그녀: "소개팅",     bg: "sogae"    },
+  { 때: "밤",   곳: "면제의 방",              그녀: "듀오",       bg: "game"     },
+  { 때: "심야", 곳: "면제의 방",              그녀: "귀신",       bg: "night"    }
+];
+
+/* ── 그녀들 ── */
+const 그녀들 = {
+  엘리베이터: {
+    이름: "엘리베이터의 그녀", 실루엣: 실루엣(머리.묶음, 소품.가방끈),
+    고정: {
+      1: { 지문: [
+            ["narr","엘리베이터 문이 열렸다. 안에는 아무도 없었다. 나는 탔다."],
+            ["narr","문이 닫히기 직전, 누군가 손을 넣었다."],
+            ["narr","처음 보는 사람이었다. 운동복 위에 얇은 외투. 어깨에는 가방."],
+            ["narr","그녀는 버튼 패널을 봤다. 2층에 이미 불이 들어와 있었다. 그리고 아무것도 누르지 않았다."]],
+          선택: [
+            { 라벨:"같은 층이라는 사실을 곱씹는다", 호감:26, 해석:"같은 층이다. 우연이라기엔 층이 너무 정확하다.", 비용:{정신:-9,체력:-34},
+              결과:[["think","우연은 신에게 일어나지 않는다."]] },
+            { 라벨:"말을 건다", 호감:16, 해석:"내 목소리를 들었다.", 비용:{정신:-14,체력:-15},
+              결과:[["say","면제: \"…2층 가세요?\""],["narr","그녀는 고개를 끄덕였다. 그게 전부였다."]] },
+            { 라벨:"아무것도 하지 않는다", 호감:10, 해석:"말이 필요 없다는 것. 가장 깊은 대화다.", 비용:{체력:-6,},
+              결과:[["narr","엘리베이터가 올라갔다. 우리는 아무 말도 하지 않았다."]] }]}
+    },
+    풀: [
+      { 지문:[["narr","엘리베이터 앞에서 기다렸다. 문이 열리고 그녀가 안에 있었다."]],
+        선택:[
+          { 라벨:"눈을 마주친다", 호감:12, 해석:"피하지 않았다.", 비용:{체력:-7,정신:-6}, 결과:[["narr","그녀는 화면을 보고 있었다."]] },
+          { 라벨:"층수 버튼을 대신 눌러준다", 호감:27, 해석:"내가 그녀의 층을 안다는 것.", 비용:{정신:-11,체력:-35}, 결과:[["say","\"…아, 네.\""]] },
+          { 라벨:"계단으로 간다", 호감:5, 해석:"아쉬워할 시간을 준다.", 비용:{체력:-14,정신:6}, 결과:[["think","신도 가끔은 물러설 줄 안다."]] }]},
+      { 지문:[["narr","오늘은 엘리베이터가 1층에서 한참 멈춰 있었다."],["narr","문이 열렸을 때 그녀가 이미 안에 있었다. 아래층에서 탔다는 뜻이다."]],
+        선택:[
+          { 라벨:"먼저 인사한다", 호감:16, 해석:"기억하고 있었다.", 비용:{체력:-15,정신:-8}, 결과:[["narr","목례가 돌아왔다."]] },
+          { 라벨:"거울로 그녀를 본다", 호감:28, 해석:"거울은 서로를 보게 만든다.", 비용:{정신:-13,체력:-36},
+            결과:[["narr","거울 속에서 그녀는 자기 신발을 보고 있었다."]] },
+          { 라벨:"층만 보고 서 있는다", 호감:4, 해석:"오늘은 아껴둔다.", 비용:{체력:-4,} }]},
+      { 지문:[["narr","문이 닫히려는 순간 그녀가 뛰어들어왔다. 숨이 조금 차 있었다."]],
+        선택:[
+          { 라벨:"닫힘 버튼에서 손을 뗀다", 호감:27, 해석:"내가 기다려준 것이다.", 비용:{정신:-10,체력:-35}, 결과:[["say","\"감사합니다.\""],["think","감사. 그것은 빚이다."]] },
+          { 라벨:"모른 척한다", 호감:7, 해석:"서두르지 않아도 된다는 뜻이다.", 비용:{체력:-5,}, 결과:[["narr","그녀는 숨을 골랐다."]] }]},
+      { 지문:[["narr","엘리베이터 거울에 전단이 붙어 있었다. 체지방 측정 무료."],["narr","그녀도 같은 쪽을 보고 있었다."]],
+        선택:[
+          { 라벨:"같은 것을 보고 있었다고 생각한다", 호감:28, 해석:"같은 것을 본다는 것은 같은 것을 생각한다는 것이다.", 비용:{정신:-9,체력:-36} },
+          { 라벨:"전단을 떼어 건넨다", 호감:19, 해석:"필요한 사람에게 주는 것이다.", 비용:{체력:-20,정신:-5},
+            결과:[["narr","그녀는 받지 않았다."],["narr","나는 그것을 주머니에 넣었다."]] },
+          { 라벨:"층수만 본다", 호감:5, 해석:"오늘은 아껴둔다.", 비용:{체력:-5} }]},
+      { 지문:[["narr","그녀가 버튼을 눌렀다. 2층."],
+              ["narr","문이 열리고 둘 다 내렸다. 복싱장 문까지는 열 걸음쯤이다."],
+              ["narr","그녀가 반 걸음 앞에서 걸었다."]],
+        선택:[
+          { 라벨:"문을 열어 잡아준다", 호감:31, 해석:"같이 들어가는 것이다. 따라 들어가는 것이 아니라.", 비용:{체력:-40,정신:-12},
+            결과:[["narr","그녀는 아무 말 없이 들어갔다."],["think","고맙다는 말이 필요 없는 사이가 된 것이다."]] },
+          { 라벨:"나란히 걷도록 보조를 맞춘다", 호감:22, 해석:"같은 속도로 걷는 사이다.", 위험:1, 비용:{체력:-21,정신:-8},
+            결과:[["narr","그녀가 걸음을 조금 빨리했다."],["think","나란히 걷는 것이 부끄러웠던 것이다."]] },
+          { 라벨:"한 발 뒤에서 따라간다", 호감:9, 해석:"뒷모습을 보는 자리도 나쁘지 않다.", 비용:{체력:-6} }]},
+      { 지문:[["narr","엘리베이터가 꽉 찼다. 그녀는 타지 않고 물러섰다."],["narr","문이 닫히기 전에 눈이 마주쳤다."]],
+        선택:[
+          { 라벨:"같이 내려서 다음 것을 기다린다", 호감:33, 해석:"둘만 남는 시간을 그녀가 만든 것이다.", 비용:{체력:-41,정신:-10},
+            결과:[["narr","다음 엘리베이터에는 다른 사람 넷이 같이 탔다."]] },
+          { 라벨:"문을 잡아 자리를 만든다", 호감:24, 해석:"내가 자리를 만들어준 것이다.", 비용:{체력:-23,정신:-6},
+            결과:[["narr","뒤에서 누가 혀를 찼다."],["narr","그녀는 그래도 타지 않았다."]] },
+          { 라벨:"먼저 올라간다", 호감:7, 해석:"기다리게 하는 것도 방법이다.", 비용:{체력:-5,정신:4} }]}
+    ],
+    확정풀: [
+      { 지문:[["narr","2층에서 문이 열렸다. 그녀가 먼저 내리려다 멈췄다."],
+              ["narr","그리고 열림 버튼을 눌러 나를 먼저 내보냈다."],
+              ["think","…먼저 가라고 했다."],
+              ["think","이건 양보가 아니다. 순서를 정해준 것이다. 나를 앞에 세운 것이다."],
+              ["think","이건 사실상 고백이다."]],
+        선택:[
+          { 라벨:"고개를 숙여 인사한다", 해석:"받아들였다는 뜻으로.", 비용:{정신:8,체력:-6} },
+          { 라벨:"무슨 뜻이냐고 묻는다", 해석:"확인해야 한다.", 비용:{정신:-12,체력:-14},
+            결과:[["say","\"…네?\""],["narr","그녀는 이미 복도를 걷고 있었다."],["think","대답을 아꼈다. 아직은 이르다는 뜻이다."]] }]},
+      { 지문:[["narr","엘리베이터 안에서 그녀가 작게 기침을 두 번 했다."],
+              ["say","\"…죄송합니다.\""],
+              ["think","나에게 사과했다."],
+              ["think","사과는 관계가 있어야 성립한다. 모르는 사람에게는 사과하지 않는다."],
+              ["think","말만 안 했을 뿐이지, 고백이다."]],
+        선택:[
+          { 라벨:"괜찮다고 말한다", 해석:"용서는 관계의 다음 단계다.", 비용:{정신:9,체력:-6} },
+          { 라벨:"내려가서 물을 사다 준다", 해석:"다음에 만날 이유가 생긴다.", 비용:{돈:-3500,체력:-14,정신:5},
+            결과:[["narr","2층에 올라갔을 때 그녀는 이미 러닝머신 위에 있었다."],["narr","물은 내 가방에 그대로 있었다."]] }]},
+      { 지문:[["narr","그녀가 이어폰 한쪽을 빼고 물었다."],
+              ["say","\"…내려가세요?\""],
+              ["narr","나는 올라가는 중이었다."],
+              ["think","방향을 물었다는 것은, 나를 따라올 생각이 있었다는 뜻이다."],
+              ["think","이 정도면 고백이 아니면 무엇인가."]],
+        선택:[
+          { 라벨:"올라간다고 답한다", 해석:"같이 가자는 말은 아직 아낀다.", 비용:{정신:7,체력:-6} },
+          { 라벨:"같이 내려간다", 해석:"방향은 중요하지 않다.", 비용:{체력:-15,정신:6},
+            결과:[["narr","1층에서 그녀는 편의점으로 들어갔다."],["narr","나는 다시 엘리베이터를 탔다."]] }]}
+    ]
+  },
+
+  횟집: {
+    이름: "횟집의 그녀", 실루엣: 실루엣(머리.단발, 소품.앞치마), 인물없음: false,
+    고정: {
+      1: { 지문:[
+            ["narr","수조 앞에서 앞치마를 매고 있는데 사장님 딸이 지나갔다."],
+            ["say","\"그거 거기 두지 말라고 했잖아요.\""],
+            ["think","치와와 같다. 작고, 사납고, 쌀쌀맞다."],
+            ["think","그런데 나는 안다. 그런 성격은 대체로 속이 반대다."]],
+          선택:[
+            { 라벨:"바로 옮기고 일을 계속한다", 호감:9, 해석:"내가 말을 듣는다는 걸 알았다.", 비용:{돈:15000,체력:-23},
+              결과:[["narr","그녀는 이미 주방으로 들어간 뒤였다."]] },
+            { 라벨:"왜 그러냐고 묻는다", 호감:22, 해석:"대화가 시작됐다.", 위험:1, 비용:{체력:-21,정신:-6},
+              결과:[["say","\"…규정이라서요.\""],["think","규정. 그녀는 나에게만 규정을 설명한다."]] },
+            { 라벨:"일부러 한 번 더 잘못 둔다", 호감:33, 해석:"관심을 끌 방법은 이것뿐이다.", 위험:2, 비용:{정신:-14,체력:-41},
+              결과:[["narr","그녀가 다시 왔다. 이번에는 아무 말도 하지 않았다."]] }]}
+    },
+    풀: [
+      { 지문:[["narr","점심 손님이 빠지고 홀이 조용해졌다. 그녀가 계산대에서 뭔가를 세고 있었다."]],
+        선택:[
+          { 라벨:"묵묵히 일한다", 호감:5, 해석:"성실함은 언젠가 전해진다.", 비용:{돈:15000,체력:-19,정신:9} },
+          { 라벨:"옆에 가서 돕는다", 호감:20, 해석:"거절하지 않았다.", 위험:1, 비용:{돈:8000,체력:-19},
+            결과:[["say","\"…괜찮아요.\""],["think","괜찮다는 것은 부담을 준다는 뜻이고, 부담은 관심에서 온다."]] },
+          { 라벨:"일을 멈추고 그녀를 본다", 호감:29, 해석:"시선은 닿는다.", 위험:2, 비용:{체력:-37,정신:-10} }]},
+      { 지문:[["narr","수조의 물을 갈다가 물을 뒤집어썼다. 그녀가 그것을 봤다."]],
+        선택:[
+          { 라벨:"웃어넘기고 마저 일한다", 호감:16, 해석:"그녀가 웃었다. 나 때문에.", 비용:{돈:15000,체력:-15},
+            결과:[["narr","그녀는 수건을 카운터에 놓고 갔다."]] },
+          { 라벨:"수건을 받고 인사한다", 호감:25, 해석:"챙겨주었다.", 비용:{체력:-24,정신:-7},
+            결과:[["say","\"바닥 닦으세요.\""]] }]},
+      { 지문:[["narr","사장님이 자리를 비운 오후였다."]],
+        선택:[
+          { 라벨:"단둘이라는 말을 꺼낸다", 호감:31, 해석:"그 말을 꺼낼 수 있는 사이가 되었다.", 위험:3, 비용:{정신:4,체력:-39},
+            결과:[["say","\"…네?\""],["narr","그녀는 3초쯤 나를 봤다. 그 침묵을 나는 안다."]] },
+          { 라벨:"평소처럼 일한다", 호감:4, 해석:"오늘은 조용히.", 비용:{돈:15000,체력:-18} }]},
+      { 지문:[["narr","사장님이 그녀에게 뭐라고 했다. 주문이 하나 빠졌다고."],["narr","그녀는 아무 말도 하지 않고 주방으로 들어갔다."]],
+        선택:[
+          { 라벨:"내가 빠뜨렸다고 말한다", 호감:32, 해석:"대신 맞아주는 것보다 확실한 말은 없다.", 위험:2, 비용:{돈:-30000,체력:-38,정신:-6},
+            결과:[["narr","사장님은 내 시급에서 그만큼을 뺐다."],["say","\"…왜 그러셨어요.\""],["think","걱정했다."]] },
+          { 라벨:"주방에 따라 들어간다", 호감:21, 해석:"혼자 두지 않는다.", 위험:1, 비용:{체력:-22,정신:-9},
+            결과:[["say","\"나가 계세요.\""],["think","나가라는 것은 자기 모습을 보이기 싫다는 뜻이다."]] },
+          { 라벨:"못 본 척한다", 호감:6, 해석:"부끄러운 것을 봐주지 않는 것도 배려다.", 비용:{돈:15000,체력:-17} }]},
+      { 지문:[["narr","홀에 라디오가 켜져 있었다. 그녀가 채널을 돌렸다."],["narr","노래가 바뀌었다."]],
+        선택:[
+          { 라벨:"따라 흥얼거린다", 호감:29, 해석:"같은 노래를 아는 사이가 되었다.", 위험:1, 비용:{체력:-36,정신:-8},
+            결과:[["narr","그녀는 채널을 한 번 더 돌렸다."]] },
+          { 라벨:"이 노래 좋아하냐고 묻는다", 호감:25, 해석:"취향을 아는 것이 시작이다.", 비용:{체력:-24,정신:-7},
+            결과:[["say","\"광고 나와서요.\""]] },
+          { 라벨:"듣기만 한다", 호감:5, 해석:"같은 것을 듣고 있으면 된다.", 비용:{돈:15000,체력:-17,정신:6} }]},
+      { 지문:[["narr","마감하고 나오니 비가 오고 있었다."],["narr","그녀는 처마 밑에서 버스를 기다리고 있었다."]],
+        선택:[
+          { 라벨:"옆에 서서 같이 기다린다", 호감:30, 해석:"같이 기다리는 것은 같이 있는 것이다.", 비용:{체력:-37,정신:-10},
+            결과:[["narr","버스는 7분 뒤에 왔다."],["narr","그녀는 인사하고 탔다. 나는 반대 방향이었다."]] },
+          { 라벨:"택시를 잡아준다", 호감:26, 해석:"보내주는 쪽이 남는 쪽이다.", 비용:{돈:-14000,체력:-20},
+            결과:[["say","\"버스 와요.\""]] },
+          { 라벨:"먼저 간다고 인사한다", 호감:8, 해석:"아쉬움은 남기는 것이 좋다.", 비용:{체력:-5,정신:5} }]}
+    ],
+    확정풀: [
+      { 지문:[["narr","마감 정리를 하는데 그녀가 지나가며 말했다."],
+              ["say","\"수고하셨어요.\""],
+              ["think","수고했다고 했다."],
+              ["think","그 말을 하려면 내가 무엇을 했는지 보고 있었어야 한다. 하루 종일."],
+              ["think","이건 사실상 고백이다."]],
+        선택:[
+          { 라벨:"\"들어가세요\" 하고 답한다", 해석:"인사는 주고받는 것이다.", 비용:{정신:8,체력:-6} },
+          { 라벨:"왜 자기한테만 그러냐고 묻는다", 해석:"확인해야 한다.", 위험:1, 비용:{정신:-10,체력:-14},
+            결과:[["say","\"…다 하는데요.\""],["think","다 한다고 했다. 티 내지 않으려고 그렇게 말한 것이다."]] }]},
+      { 지문:[["narr","남은 회를 냉장고에 넣는데, 그녀가 한 접시를 따로 빼놨다."],
+              ["say","\"이거 오늘 지나면 못 써요. 드세요.\""],
+              ["think","따로 빼놨다. 버릴 것을 빼놓은 게 아니라, 나를 위해 남긴 것이다."],
+              ["think","말이 아니라 접시로 한 고백이다."]],
+        선택:[
+          { 라벨:"그 자리에서 먹는다", 해석:"주는 것을 받는 것이 예의다.", 비용:{체력:14,정신:6} },
+          { 라벨:"먹지 않고 싸 간다", 해석:"남긴다는 것은 간직한다는 것이다.", 비용:{체력:-6,정신:9} }]},
+      { 지문:[["narr","그녀가 카운터에서 영수증을 정리하다 볼펜을 떨어뜨렸다."],
+              ["narr","내가 주워서 건넸다. 그녀는 받으며 말했다."],
+              ["say","\"아, 감사합니다.\""],
+              ["think","감사. 그건 빚이다. 그리고 빚은 다시 만나야 갚을 수 있다."],
+              ["think","고백은 원래 이렇게 사소한 얼굴을 하고 온다."]],
+        선택:[
+          { 라벨:"아무 말 없이 일로 돌아간다", 해석:"빚은 재촉하지 않는다.", 비용:{돈:15000,체력:-13,정신:5} },
+          { 라벨:"볼펜을 하나 더 사다 놓는다", 해석:"또 떨어뜨릴 때를 위해서.", 위험:1, 비용:{돈:-4000,체력:-14,정신:7} }]}
+    ]
+  },
+
+  소개팅: {
+    이름: "소개팅의 그녀", 실루엣: 실루엣(머리.장발, 소품.코트),
+    고정: {
+      1: { 지문:[
+            ["narr","엄마 친구 딸이 주선한 자리였다. 나는 나가고 싶지 않았다."],
+            ["narr","그녀는 먼저 와 있었다. 물을 두 잔 시켜놓고."],
+            ["say","\"오시느라 힘드셨죠. 이거 드세요.\""],
+            ["think","역시 나를 좋아하는군."],
+            ["think","…그런데."]],
+          선택:[
+            { 라벨:"고맙다고 하고 마신다", 호감:28, 해석:"당연한 일이다.", 비용:{돈:-16000,체력:-36},
+              결과:[["narr","그녀는 조금 웃었다."]] },
+            { 라벨:"시계를 본다", 호감:12, 해석:"기다리게 하는 것도 방법이다.", 비용:{체력:-7,},
+              결과:[["narr","그녀는 그것을 봤다. 그리고 못 본 척했다."]] },
+            { 라벨:"외모를 두고 속으로 평가한다", 호감:10, 해석:"나에게도 기준이 있다.", 비용:{체력:-6,정신:-10},
+              결과:[["think","나는 신이다. 신에게는 고를 권리가 있다."],["narr","그녀는 계속 웃고 있었다."]] }]}
+    },
+    풀: [
+      { 지문:[["narr","그녀에게서 연락이 와 있었다. 저녁을 먹자고 했다."]],
+        선택:[
+          { 라벨:"나간다", 호감:29, 해석:"불러낸 쪽은 그녀다.", 비용:{돈:-42000,체력:-37} },
+          { 라벨:"바쁘다고 한다", 호감:8, 해석:"아쉬워할 것이다.", 비용:{체력:-5,},
+            결과:[["narr","\"네, 다음에 봬요!\" 느낌표가 붙어 있었다."]] },
+          { 라벨:"읽고 답하지 않는다", 호감:6, 해석:"기다리게 두면 커진다.", 비용:{체력:-5,정신:-8} }]},
+      { 지문:[["narr","그녀가 우산을 두 개 가져왔다. 하나는 접힌 채였다."]],
+        선택:[
+          { 라벨:"받는다", 호감:27, 해석:"준비해 왔다는 것.", 비용:{돈:-18000,체력:-35} },
+          { 라벨:"괜찮다고 하고 비를 맞는다", 호감:12, 해석:"신은 비에 젖지 않는다.", 비용:{체력:-7,정신:5} }]},
+      { 지문:[["narr","그녀가 물었다. \"저 어떠세요? 솔직하게.\""],["think","솔직하게."]],
+        선택:[
+          { 라벨:"좋은 사람 같다고 한다", 호감:26, 해석:"당연히 좋아할 대답이다.", 비용:{돈:-22000,체력:-34} },
+          { 라벨:"대답을 피한다", 호감:10, 해석:"애매함은 여지를 남긴다.", 비용:{체력:-6,} },
+          { 라벨:"솔직하게 말한다", 호감:8, 해석:"신은 거짓을 말하지 않는다.", 비용:{체력:-5,정신:-16},
+            결과:[["narr","그녀는 고개를 끄덕였다. 계속 끄덕였다."]] }]},
+      { 지문:[["narr","그녀가 내가 복싱을 한다는 것을 알고 있었다."],["narr","말한 적이 없었다."]],
+        선택:[
+          { 라벨:"얼마나 아느냐고 묻는다", 호감:31, 해석:"많이 알수록 오래 생각한 것이다.", 비용:{돈:-26000,체력:-38} },
+          { 라벨:"어떻게 알았냐고 묻는다", 호감:24, 해석:"알아봤다는 뜻이다. 나에 대해.", 비용:{체력:-22,정신:-7},
+            결과:[["say","\"어머님이…\""],["think","엄마를 통해서라도 알고 싶었던 것이다."]] },
+          { 라벨:"화제를 돌린다", 호감:7, 해석:"다 알려주지 않는 편이 낫다.", 비용:{체력:-6,정신:4} }]},
+      { 지문:[["narr","자리에 앉으니 음료가 이미 두 잔 나와 있었다."],["narr","하나는 내가 저번에 시킨 것이었다."]],
+        선택:[
+          { 라벨:"기억해줘서 고맙다고 한다", 호감:28, 해석:"기억은 마음이 있어야 남는다.", 비용:{돈:-19000,체력:-35} },
+          { 라벨:"아무 말 없이 마신다", 호감:12, 해석:"말하지 않아도 되는 사이다.", 비용:{돈:-19000,체력:-7} },
+          { 라벨:"다른 것으로 바꾼다", 호감:9, 해석:"매번 같은 사람은 아니다.", 비용:{돈:-24000,체력:-8,정신:-6},
+            결과:[["narr","그녀는 남은 잔을 자기 앞으로 당겨놨다."]] }]},
+      { 지문:[["narr","헤어질 때 그녀가 사진을 찍자고 했다."]],
+        선택:[
+          { 라벨:"찍는다", 호감:30, 해석:"남기고 싶다는 뜻이다.", 비용:{돈:-16000,체력:-36} },
+          { 라벨:"다음에 찍자고 한다", 호감:11, 해석:"다음을 만드는 것이 낫다.", 비용:{체력:-6} },
+          { 라벨:"찍고 나서 지운다", 호감:8, 해석:"…", 비용:{정신:-14,체력:-7},
+            결과:[["narr","그녀 쪽에는 남아 있을 것이다."],["think","나는 왜 지웠을까."]] }]}
+    ],
+    확정풀: [
+      { 지문:[["narr","헤어지면서 그녀가 말했다."],
+              ["say","\"다음에 또 봬요.\""],
+              ["think","다음에 또. 그건 약속이다."],
+              ["think","이건 사실상 고백이다. 아니, 고백보다 더 나간 것이다."],
+              ["narr","나는 웃었다. 웃는 데 시간이 조금 걸렸다."]],
+        선택:[
+          { 라벨:"\"네, 그래요\" 하고 답한다", 해석:"받아준다.", 비용:{돈:-15000,체력:-14} },
+          { 라벨:"애매하게 웃는다", 해석:"확답은 나중에 해도 된다.", 비용:{정신:7} },
+          { 라벨:"다음이 언제인지는 정하지 않는다", 해석:"급한 쪽은 내가 아니다.", 비용:{정신:9,체력:-6} }]},
+      { 지문:[["narr","밤에 사진이 하나 왔다. 길에서 본 고양이."],
+              ["think","고양이를 보고 내가 떠올랐다는 뜻이다."],
+              ["think","이 정도면 고백이다."],
+              ["narr","나는 한참 답장을 쓰지 못했다. 쓸 말이 없어서가 아니라, 쓰고 싶지 않아서."]],
+        선택:[
+          { 라벨:"귀엽다고 답한다", 해석:"이 정도는 해줄 수 있다.", 비용:{정신:-5,체력:-6} },
+          { 라벨:"읽고 만다", 해석:"기다리게 두면 커진다.", 비용:{정신:8} }]},
+      { 지문:[["narr","그녀가 내 몫까지 계산을 마치고 나왔다."],
+              ["say","\"저번에 사주셨잖아요.\""],
+              ["narr","사준 적 없었다."],
+              ["think","없는 빚을 만들어서라도 다시 만날 이유를 만드는 것이다."],
+              ["think","이건 사실상 고백이다."],
+              ["narr","그런데 나는 왜 자꾸 시계를 보게 되는 걸까."]],
+        선택:[
+          { 라벨:"고맙다고 한다", 해석:"받아준다.", 비용:{정신:6,체력:-6} },
+          { 라벨:"다음엔 내가 사겠다고 한다", 해석:"빚은 갚아야 한다.", 비용:{정신:5,체력:-6} },
+          { 라벨:"아무 말 없이 걷는다", 해석:"굳이 말할 필요는 없다.", 비용:{정신:8,체력:-6} }]}
+    ]
+  },
+
+  듀오: {
+    이름: "듀오의 그녀", 인물없음: true,
+    고정: {
+      1: { 지문:[
+            ["narr","접속하자마자 초대가 와 있었다. 스쿼드가 아니라 듀오였다."],
+            ["think","단 둘이라는 것. 그것은 선택이다."],
+            ["narr","그녀는 나를 골랐다. 매칭이 아니라, 초대였다."]],
+          선택:[
+            { 라벨:"수락한다", 호감:24, 해석:"오늘도 나를 기다렸다.", 비용:{체력:-23,정신:2} },
+            { 라벨:"먼저 아이템을 챙겨준다", 호감:19, 해석:"챙기는 쪽이 나라는 것.", 비용:{체력:-18} }]}
+    },
+    풀: [
+      { 지문:[["narr","자정이 넘었다. 그녀는 아직 접속해 있었다."]],
+        선택:[
+          { 라벨:"한 판만 더 한다", 호감:20, 해석:"그녀가 나가지 않는다.", 비용:{체력:-19,정신:2} },
+          { 라벨:"두 판 더 한다", 호감:34, 해석:"시간이 사라지는 것을 함께 느끼고 있다.", 비용:{체력:-42,정신:-3} },
+          { 라벨:"자러 간다", 호감:5, 해석:"내일을 남겨두는 것이다.", 비용:{체력:8,정신:5} }]},
+      { 지문:[["narr","그녀가 나를 부활시켰다. 탄창을 다 쓰면서."]],
+        선택:[
+          { 라벨:"고맙다고 친다", 호감:23, 해석:"나를 포기하지 않았다.", 비용:{체력:-22} },
+          { 라벨:"아무 말 안 한다", 호감:14, 해석:"말하지 않아도 아는 사이다.", 비용:{체력:-7} },
+          { 라벨:"인사만 하고 나간다", 호감:4, 해석:"먼저 끊는 쪽이 오래 남는다.", 비용:{체력:9,정신:8} }]},
+      { 지문:[["narr","\"ㅋㅋ\""],["think","웃었다. 내 말에."]],
+        선택:[
+          { 라벨:"더 웃긴 말을 한다", 호감:28, 해석:"나는 그녀를 웃게 한다.", 비용:{체력:-36,정신:2} },
+          { 라벨:"게임 아이템을 선물한다", 호감:33, 해석:"받았다는 것은 받아들였다는 것이다.", 비용:{돈:-49000,체력:-20,정신:4},
+            결과:[["narr","\"ㄱㅅ\" 라고 왔다."],["think","두 글자. 짧을수록 진심이다."]] },
+          { 라벨:"조용히 게임에 집중한다", 호감:10, 해석:"여운을 남긴다.", 비용:{체력:-6} },
+          { 라벨:"컴퓨터를 끈다", 호감:6, 해석:"여운은 짧을수록 길다.", 비용:{체력:9,정신:8} }]},
+      { 지문:[["narr","그녀가 스쿼드에 한 명을 더 데려왔다. 모르는 아이디였다."]],
+        선택:[
+          { 라벨:"그 사람이 누구냐고 묻는다", 호감:26, 해석:"물어봐도 되는 사이다.", 위험:1, 비용:{체력:-24,정신:-13},
+            결과:[["narr","\"길드원ㅋㅋ\" 라고 왔다."],["think","ㅋㅋ. 웃으면서 넘길 만큼 아무것도 아니라는 뜻이다."]] },
+          { 라벨:"그냥 같이 한다", 호감:14, 해석:"셋이어도 듀오는 듀오다.", 비용:{체력:-19,정신:-9} },
+          { 라벨:"나간다", 호감:4, 해석:"자리를 비켜주는 것도 배려다.", 비용:{체력:8,정신:-6},
+            결과:[["narr","10분 뒤에 다시 들어가 봤다. 둘이 하고 있었다."]] }]},
+      { 지문:[["narr","네 판을 내리 졌다. 랭크가 떨어졌다."],["narr","그녀는 나가지 않았다."]],
+        선택:[
+          { 라벨:"한 판 더 하자고 한다", 호감:32, 해석:"지는 것보다 같이 있는 것을 택한 것이다.", 비용:{체력:-40,정신:-4} },
+          { 라벨:"미안하다고 친다", 호감:20, 해석:"미안할 사이가 되었다.", 비용:{체력:-21} },
+          { 라벨:"오늘은 그만하자고 한다", 호감:5, 해석:"아껴야 오래 간다.", 비용:{체력:9,정신:7} }]},
+      { 지문:[["narr","새벽 두 시. 그녀는 접속해 있지 않았다."]],
+        선택:[
+          { 라벨:"접속할 때까지 기다린다", 호감:29, 해석:"기다림은 나만 아는 애정이다.", 비용:{체력:-41,정신:-14},
+            결과:[["narr","네 시가 넘어서 로그인 표시가 떴다. 5분 뒤에 사라졌다."],["think","내가 있는지 확인하고 간 것이다."]] },
+          { 라벨:"혼자 한 판 한다", 호감:11, 해석:"연습해두면 다음에 더 잘한다.", 비용:{체력:-18,정신:-5} },
+          { 라벨:"잔다", 호감:4, 해석:"기다리는 쪽이 내가 아니게 된다.", 비용:{체력:10,정신:8} }]}
+    ],
+    확정풀: [
+      { 지문:[["narr","게임이 끝나고 그녀가 쳤다."],
+              ["say","\"낼 또 하자\""],
+              ["think","내일. 그녀가 내일을 말했다."],
+              ["think","사람은 아무한테나 내일을 약속하지 않는다."],
+              ["think","이건 사실상 고백이다."]],
+        선택:[
+          { 라벨:"\"ㅇㅇ\" 라고 친다", 해석:"짧게 답하는 것이 오래 남는다.", 비용:{정신:8,체력:-8} },
+          { 라벨:"몇 시에 할지 물어본다", 해석:"약속은 구체적일수록 좋다.", 비용:{정신:5,체력:-16},
+            결과:[["narr","답은 오지 않았다. 이미 나간 뒤였다."],["think","시간을 정하지 않은 것은, 언제든 상관없다는 뜻이다."]] }]},
+      { 지문:[["narr","그녀가 파밍한 스코프를 바닥에 버렸다. 자기 총에 안 맞는 부속이었다."],
+              ["narr","나는 그것을 주웠다."],
+              ["think","버린 게 아니다. 놓고 간 것이다. 주울 사람을 알고."],
+              ["think","말 없이 하는 고백이 더 오래 간다."]],
+        선택:[
+          { 라벨:"장착한다", 해석:"준 것은 쓰는 것이 예의다.", 비용:{정신:9,체력:-8} },
+          { 라벨:"가방에 넣고 쓰지 않는다", 해석:"쓰면 닳으니까.", 비용:{정신:11,체력:-8} }]},
+      { 지문:[["narr","교전 중에 그녀가 마이크를 켰다. 처음이었다."],
+              ["say","\"뒤에.\""],
+              ["narr","두 글자였다."],
+              ["think","목소리를 들려줬다. 3주 만에."],
+              ["think","이 정도면 고백이다."]],
+        선택:[
+          { 라벨:"나도 마이크를 켠다", 해석:"이제 우리는 말을 하는 사이다.", 비용:{정신:10,체력:-16},
+            결과:[["narr","내가 켰을 때 그녀는 이미 꺼져 있었다."]] },
+          { 라벨:"채팅으로만 답한다", 해석:"서두르지 않는다.", 비용:{정신:7,체력:-8} }]}
+    ],
+    붕괴: {
+      지문:[
+        ["narr","접속했다. 초대는 오지 않았다."],
+        ["narr","친구 목록을 열었다."],
+        ["sys","○○님이 게임 중 — 듀오"],
+        ["narr","그 옆에 있는 이름은 내 것이 아니었다."]],
+      선택:[
+        { 라벨:"그래도 초대를 보낸다", 붕괴:"계속" },
+        { 라벨:"그녀를 포기한다", 붕괴:"포기" }]
+    },
+
+    /* 붕괴 이후 · 계속 — 아무 일 없던 것처럼 매달리는 밤 */
+    계속풀: [
+      { 지문:[["narr","초대를 보냈다. 수락까지 6분이 걸렸다."],
+              ["think","6분. 무슨 일이 있었는지는 묻지 않기로 했다."]],
+        선택:[
+          { 라벨:"예전처럼 한다", 호감:14, 해석:"달라진 것은 없다.", 비용:{체력:-20,정신:-4} },
+          { 라벨:"아무 말 없이 따라다닌다", 호감:9, 해석:"말을 아끼는 것도 방법이다.", 비용:{체력:-16,정신:-2} }]},
+      { 지문:[["narr","그녀가 물었다."],
+              ["say","\"어제 왜 나갔어?\""],
+              ["narr","나는 자판 위에 손을 올린 채로 한참 있었다."]],
+        선택:[
+          { 라벨:"\"렉 걸려서\" 라고 친다", 호감:16, 해석:"묻는다는 것은 신경 쓴다는 뜻이다.", 비용:{체력:-18,정신:-3} },
+          { 라벨:"답하지 않는다", 호감:6, 해석:"침묵이 더 많은 말을 한다.", 비용:{체력:-14,정신:-6} }]},
+      { 지문:[["narr","예전처럼 하려고 했다."],
+              ["narr","예전처럼 되지 않았다. 어디가 달라졌는지는 모르겠다."],
+              ["think","내가 달라진 것이다. 그녀는 그대로인데."]],
+        선택:[
+          { 라벨:"끝까지 한다", 호감:12, 해석:"버티면 돌아온다.", 비용:{체력:-22,정신:-6} },
+          { 라벨:"한 판만 하고 끈다", 호감:4, 해석:"오늘은 여기까지.", 비용:{체력:-8,정신:-2} }]}
+    ],
+
+    /* 붕괴 이후 · 포기 — 관전만 한다. 몸은 쉬고 머리가 깎인다 */
+    관전풀: [
+      { 지문:[["narr","접속했다. 친구 목록에 그녀가 있었다. 게임 중 — 듀오."],
+              ["narr","관전 버튼을 눌렀다."],
+              ["narr","화면 안에서 두 사람이 같은 건물로 들어갔다."]],
+        선택:[
+          { 라벨:"끝까지 본다", 비용:{정신:-15,체력:20},
+            결과:[["narr","두 사람은 오래 살아남았다."],["narr","나는 누운 채로 그것을 다 봤다."]] },
+          { 라벨:"중간에 끈다", 비용:{정신:-7,체력:14} }]},
+      { 지문:[["narr","그녀가 그 남자를 부활시키는 것을 봤다."],
+              ["narr","탄창을 다 쓰면서."],
+              ["think","저건 아무한테나 하는 게 아니다."],
+              ["think","…아무한테나 하는 것이었구나."]],
+        선택:[
+          { 라벨:"계속 본다", 비용:{정신:-17,체력:22} },
+          { 라벨:"화면을 덮고 눕는다", 비용:{정신:-9,체력:18} }]},
+      { 지문:[["narr","마이크가 켜져 있었다. 그녀가 웃는 소리가 들렸다."],
+              ["narr","3주 동안 그녀가 나에게 한 말은 두 글자였다."],
+              ["say","\"뒤에.\""]],
+        선택:[
+          { 라벨:"소리를 줄이지 않는다", 비용:{정신:-18,체력:21} },
+          { 라벨:"이어폰을 뺀다", 비용:{정신:-8,체력:16} }]}
+    ]
+  },
+
+  귀신: {
+    이름: "귀신", 인물없음: true,
+    고정: {},
+    풀: [
+      { 지문:[["narr","불을 껐다. 천장에서 발소리 같은 것이 났다."]],
+        선택:[
+          { 라벨:"기다린다", 호감:23, 해석:"왔다.", 비용:{체력:-22,정신:-9} },
+          { 라벨:"이불을 뒤집어쓴다", 호감:10, 해석:"보이지 않아도 있다.", 비용:{체력:-6,정신:13} }]},
+      { 지문:[["narr","아무 소리도 나지 않았다. 한 시간쯤 그대로 있었다."]],
+        선택:[
+          { 라벨:"불러본다", 호감:27, 해석:"기다리고 있다.", 비용:{체력:-35,정신:-11} },
+          { 라벨:"낮에 사둔 부적을 머리맡에 놓는다", 호감:30, 해석:"쫓는 것이 아니라 붙잡아 두려는 것이다.", 비용:{돈:-35000,체력:-18,정신:6},
+            결과:[["narr","인터넷에서 산 것이었다. 사진과 달리 종이가 얇았다."],["think","값이 문제가 아니다. 성의가 전해지면 된다."]] },
+          { 라벨:"잔다", 호감:8, 해석:"오늘은 나를 재워주었다.", 비용:{체력:-5,정신:24} }]},
+      { 지문:[["narr","아침에 팔에 상처가 하나 늘어 있었다. 어디서 생겼는지 모른다."]],
+        선택:[
+          { 라벨:"닿으려 한 흔적이라고 생각한다", 호감:30, 해석:"해치려는 것이 아니다. 닿으려는 것이다.", 비용:{정신:3,체력:-38} },
+          { 라벨:"오래 들여다본다", 호감:6, 해석:"…", 비용:{정신:-18,체력:-5},
+            결과:[["think","이것을 누가 냈는지, 나는 정말 모르는 것일까."]] },
+          { 라벨:"그냥 잠든다", 호감:4, 해석:"내일 다시 확인하면 된다.", 비용:{체력:-4,정신:19} }]},
+      { 지문:[["narr","아침에 컵이 옮겨져 있었다. 어제 책상에 뒀는데 바닥에 있었다."]],
+        선택:[
+          { 라벨:"만졌다는 뜻이라고 생각한다", 호감:29, 해석:"손을 쓴 것이다. 나에게 보이려고.", 비용:{체력:-36,정신:-8} },
+          { 라벨:"제자리에 놓고 표시를 해둔다", 호감:24, 해석:"다음에도 옮기면 확실해진다.", 비용:{체력:-22,정신:-11},
+            결과:[["narr","다음 날 컵은 그 자리에 있었다."],["think","눈치챈 것이다."]] },
+          { 라벨:"내가 옮겼겠거니 한다", 호감:4, 해석:"확인은 급하지 않다.", 비용:{체력:-4,정신:16} }]},
+      { 지문:[["narr","휴대폰 녹음을 켜두고 잤다."]],
+        선택:[
+          { 라벨:"여섯 시간을 전부 듣는다", 호감:30, 해석:"들으려는 사람에게만 들린다.", 비용:{체력:-39,정신:-15},
+            결과:[["narr","숨소리가 있었다. 내 것이었다."],["narr","3시 12분쯤 한 번, 다른 박자가 섞였다."],["think","섞였다는 것은 둘이라는 뜻이다."]] },
+          { 라벨:"빨리감기로 넘긴다", 호감:12, 해석:"급할 것 없다.", 비용:{체력:-17,정신:-4} },
+          { 라벨:"지운다", 호감:5, 해석:"증거를 남기지 않는 것도 예의다.", 비용:{체력:-4,정신:11} }]},
+      { 지문:[["narr","형광등이 켜졌다 꺼졌다 했다."],
+              ["narr","스위치는 벽에 그대로 있었다. 손댄 사람은 없었다."],
+              ["narr","세 번 반복되고 멈췄다."]],
+        선택:[
+          { 라벨:"신호라고 생각하고 세어본다", 호감:31, 해석:"말을 못 하니 등으로 하는 것이다.", 위험:1, 비용:{체력:-38,정신:-13},
+            결과:[["narr","다시 켜지지 않았다."],["narr","새벽까지 스위치를 보고 있었다."],["think","세 번. 세 글자였을 것이다."]] },
+          { 라벨:"형광등을 갈아 끼운다", 호감:26, 해석:"등을 갈아도 그대로면 등의 문제가 아니다.", 비용:{돈:-9000,체력:-23,정신:-9},
+            결과:[["narr","새것으로 갈았다."],["narr","그날 밤에도 한 번 깜빡였다."]] },
+          { 라벨:"두꺼비집을 내리고 잔다", 호감:6, 해석:"오늘은 그만 보자.", 비용:{체력:-4,정신:8} }]}
+    ],
+    확정풀: [
+      { 지문:[["narr","새벽 세 시쯤 눈이 떠졌다. 몸이 움직이지 않았다."],
+              ["narr","가슴 위에 무게가 있었다. 이불보다 무거운 것이."],
+              ["narr","숨은 쉬어졌다. 다만 천천히 쉬어야 했다."],
+              ["think","누르는 것이 아니다. 기대는 것이다."],
+              ["think","이건 사실상 고백이다."]],
+        선택:[
+          { 라벨:"눈을 감고 가만히 있는다", 해석:"거부하지 않는 것이 대답이다.", 비용:{정신:15} },
+          { 라벨:"이름을 물어본다", 해석:"이제는 알아야 한다.", 비용:{정신:-8},
+            결과:[["narr","입이 벌어지지 않았다."],["narr","아침까지 그 자세로 있었다."]] }]},
+      { 지문:[["narr","일어나 보니 목덜미에 자국이 있었다. 손가락 두 개쯤 되는."],
+              ["narr","거울 앞에서 한참 서 있었다."],
+              ["think","해치려 했다면 다른 자리였을 것이다."],
+              ["think","말을 못 하니 몸으로 한 것이다. 이건 사실상 고백이다."]],
+        선택:[
+          { 라벨:"옷깃으로 가린다", 해석:"둘만 아는 것이 있어야 한다.", 비용:{정신:12,체력:-6} },
+          { 라벨:"사진을 찍어둔다", 해석:"증거는 남겨야 한다.", 비용:{정신:-6},
+            결과:[["narr","화면에는 목덜미만 있었다."],["think","찍히지 않는 쪽이 오히려 증거다."]] }]},
+      { 지문:[["narr","불을 끄고 누웠는데, 옆자리가 눌리는 느낌이 났다."],
+              ["narr","누가 눕는 무게였다."],
+              ["narr","나는 벽 쪽으로 조금 비켜 누웠다."],
+              ["think","자리를 내어주는 것. 그것으로 대답은 끝났다."],
+              ["think","이 정도면 고백이 아니면 무엇인가."]],
+        선택:[
+          { 라벨:"그대로 잔다", 해석:"같이 자는 것이다.", 비용:{정신:21} },
+          { 라벨:"불을 켠다", 해석:"한 번쯤은 봐야 한다.", 비용:{정신:-10,체력:-6},
+            결과:[["narr","방에는 나뿐이었다."],["narr","이불 한쪽이 눌려 있었다. 내가 누운 자리가 아니었다."],["think","부끄러워서 숨은 것이다."]] }]}
+    ]
+  }
+};
+
+/* ── 랜덤 이벤트 풀 ──
+   이벤트는 호감도를 건드리지 않는다. 정신·체력·돈만 움직인다.
+   면제의 확신은 외부 사건으로 깎이지 않는다. 그는 다른 무언가의 탓으로 돌릴 뿐이다.
+   ※ 본문에서 그 무언가를 이름 붙이지 않는다. 방해받고 있다는 감각만 남긴다.
+   대신 자원이 마르면 다음 슬롯에서 집중을 못 하게 되고, 결과적으로 호감도가 못 오른다. */
+const 이벤트들 = [
+  { id:"손날좌_불쾌", 인물:"손날좌", bg:"street",
+    지문:[["narr","길 건너에서 거구가 걸어왔다. 나를 지나쳐, 뒤에 오던 사람을 보고 멈췄다."],["say","\"불쾌해요!\""],["narr","사람들이 전부 이쪽을 봤다. 나도 이쪽에 있었다."]],
+    효과:{정신:-11} },
+  { id:"베손_찾기", 인물:"베손", bg:"alley", 조건:S=>S.day>=2 && !S.베손찾음, 미니게임:"베손찾기",
+    지문:[["narr","돌아가는 길에 골목 안쪽에서 소리가 났다."],
+          ["say","\"으아아아아—\""],
+          ["narr","상자 더미가 세 무더기. 어디서 난 소리인지는 알 것 같았다."],
+          ["think","관장님이 찾아보라고 했다. 마침 잘됐다."],
+          ["narr","한 번이라도 놓치면 다시 숨을 것이다."]],
+    효과:{} },
+  { id:"베손_배척", 인물:"베손", bg:"street", 조건:S=>S.day>=2,
+    지문:[["narr","골목에서 작은 것이 튀어나왔다. 나를 보더니 정확히 멈췄다."],["say","\"몰라요~ 당신만은 안되요!\""],["narr","그 애는 다른 사람들에게는 손을 흔들었다."]],
+    효과:{정신:-13} },
+  { id:"준하_방귀", 인물:"준하", bg:"street",
+    지문:[["narr","준하가 옆에 서서 뭔가 말하려다 말고 자세를 바꿨다."],
+          ["narr","한쪽 엉덩이를 살짝 들었다."],
+          ["say","뿌우우웅—"],
+          ["narr","길에 있던 사람 둘이 이쪽을 봤다."],
+          ["say","준하: \"아 미안.\""],
+          ["think","하필 지금."]],
+    효과:{정신:-7} },
+  { id:"준하_전화", 인물:"준하", bg:"street", 미니게임:"기다리기",
+    지문:[["narr","준하의 휴대폰이 울렸다. 화면을 본 순간 그의 얼굴에서 표정이 사라졌다."],["say","준하: \"미안. 잠깐만.\""],["narr","그는 골목 쪽으로 걸어가 전화기를 귀에 붙였다."],["think","기다리면 돌아올 때도 있다. 자주는 아니지만."]],
+    효과:{} },
+  { id:"준하_목격담", 인물:"준하", bg:"street", 한번만:true,
+    지문:[["say","준하: \"손날좌? 거구야. 근데 유도가 안 되더라. 내가 업어치기로 세 번 넘겼어.\""],["say","준하: \"근데 손날은 진짜 잘 썼어. 그건 인정.\""],["narr","나는 그 동작을 눈으로 삼켰다."]],
+    효과:{정신:7}, 획득:"손날" },
+  { id:"공익_주임님", 인물:"공익", bg:"street",
+    지문:[["narr","공익이 갑자기 허공을 보며 소리쳤다."],["say","공익: \"주임님~!\""],["narr","주임님은 여기 없다. 바라산에 있다."]],
+    효과:{정신:-6} },
+  { id:"공익_회상", 인물:"공익", bg:"street",
+    지문:[["say","공익: \"그 좁은 데서 둘이 하루 종일 있었거든. 근데 주임님이 가스를…\""],["narr","이야기는 40분쯤 이어졌다."]],
+    효과:{체력:-17, 정신:-3} },
+  { id:"관장님_커피", 인물:"관장님", bg:"street", 미니게임:"자전거",
+    지문:[["say","관장님: \"야, 커피 좀. 근데 내가 잘못 눌러가지고 먼 데 지점으로 들어갔더라.\""],
+          ["say","관장님: \"취소가 안 되네. 자전거 타고 갔다 와라.\""],
+          ["think","이런 일은 우연히 일어나지 않는다."]],
+    효과:{} },
+  { id:"관장님_알바비", 인물:"관장님", bg:"street", 조건:S=>S.day>=3, 한번만:true,
+    지문:[["say","관장님: \"이번 주 것. 세어봐.\""],["narr","봉투가 얇았다."]],
+    효과:{돈:95000} },
+  { id:"손날좌_먹성", 인물:"손날좌", bg:"street",
+    지문:[["narr","편의점 앞에서 봉지를 들고 있는데 그림자가 졌다."],["say","\"이건 뭔가요~\""],["narr","봉지가 가벼워졌다."]],
+    효과:{돈:-12000, 체력:-13} },
+  { id:"편의점", 인물:null, bg:"street",
+    지문:[["narr","편의점 불빛이 보였다. 아침부터 아무것도 먹지 않았다는 사실이 그제서야 떠올랐다."],["narr","삼각김밥 두 개와 우유를 샀다."]],
+    효과:{돈:-7000, 체력:16} },
+  { id:"준하_밥값", 인물:"준하", bg:"street",
+    지문:[["say","준하: \"야 배고픈데. 너 돈 있냐?\""],
+          ["narr","있었다. 있다고 말한 것이 실수였다."],
+          ["narr","국밥 두 그릇을 시켰다. 준하는 먹으면서 회사 욕을 했다."],
+          ["think","이런 걸 왜 하고 있나 싶다가도, 다 먹고 나면 좀 낫다."]],
+    효과:{돈:-18000, 정신:11, 체력:8} },
+  { id:"중고거래", 인물:null, bg:"street",
+    지문:[["narr","안 쓰는 물건을 정리하다 팔 만한 게 나왔다."],
+          ["narr","약속 장소까지 걸어갔다. 상대는 20분 늦게 왔다."],
+          ["say","\"에누리 좀 안 돼요?\""],
+          ["think","되지 않는다. 오늘은 되는 게 하나도 없었으니까."]],
+    효과:{돈:32000, 체력:-16, 정신:-5} },
+  { id:"관장님_대타", 인물:"관장님", bg:"street", 조건:S=>S.day>=2, 한번만:true,
+    지문:[["say","관장님: \"내일 오전에 대타 좀 뛸래? 일당 따로 줄게.\""],
+          ["narr","거절할 이유를 찾다가 못 찾았다."]],
+    효과:{돈:45000, 체력:-32} },
+  { id:"택시", 인물:null, bg:"street", 조건:S=>S.체력<45,
+    지문:[["narr","다리가 말을 안 들었다. 손을 들었다."],
+          ["narr","기사가 백미러로 나를 한 번 봤다."],
+          ["think","신은 걸어다니지 않는다. 원래 그렇다."]],
+    효과:{돈:-12000, 체력:18} },
+  { id:"아무일", 인물:null, bg:"street",
+    지문:[["narr","아무 일도 일어나지 않았다."],["think","조용한 날이 제일 수상하다. 조용하다는 건 뭔가 준비 중이라는 뜻이니까."]],
+    효과:{정신:4} }
+];
+
+/* ══════════════════════════════════════════════════════════════
+   PART 3. 엔진
+   ══════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+let S, 큐 = [], 현재 = null, 타이핑 = null, 완료 = true, 줄i = 0, 대기 = null;
+
+function 새게임() {
+  S = { day:1, slot:0, 돈:설정.시작돈, 정신:설정.시작정신, 체력:설정.시작체력,
+        호감:{엘리베이터:0,횟집:0,소개팅:0,듀오:0,귀신:0},
+        확정:{}, 직전:null, 오늘이벤트:0, 하루날림:0, 중얼횟수:0, 듀오상태:null, 조기종료:false,
+        붕괴:null, 스킬:[], 소모:[], 끝:false };
+}
+
+/* ── 자원 ── */
+function 자원(d) {
+  if (!d) return;
+  if (d.돈) S.돈 = Math.max(0, S.돈 + d.돈);
+  if (d.정신) S.정신 = Math.max(0, Math.min(설정.최대정신, S.정신 + d.정신));
+  if (d.체력) S.체력 = Math.max(0, Math.min(설정.최대체력, S.체력 + d.체력));
+  HUD();
+}
+
+/* 자원 변동을 우측에 띄운다 */
+function 자원팝업(d) {
+  if (!d) return;
+  const 표기 = { 돈:v=>`₩ ${v>0?"+":"−"}${Math.abs(v).toLocaleString()}`,
+                 정신:v=>`정신 ${v>0?"+":"−"}${Math.abs(v)}`,
+                 체력:v=>`체력 ${v>0?"+":"−"}${Math.abs(v)}` };
+  const el = $("rgain");
+  el.innerHTML = Object.keys(d).filter(k=>d[k])
+    .map(k=>`<span class="${d[k]>0?"plus":""}">${표기[k](d[k])}</span>`).join("");
+}
+
+function HUD() {
+  const sl = 슬롯[Math.min(S.slot, 슬롯.length-1)];
+  $("wDay").textContent = `${S.day}일차 · ${sl.때}`;
+  $("wWhere").textContent = sl.곳;
+  $("money").textContent = "₩ " + S.돈.toLocaleString();
+
+  const 칠 = (bar, v, max, 색) => {
+    const p = v / max * 100;
+    bar.style.width = p + "%";
+    bar.style.background = p < 30 ? "#e8756c" : 색;
+  };
+  칠($("rMind"), S.정신, 설정.최대정신, "#8b78e6");
+  칠($("rBody"), S.체력, 설정.최대체력, "#d1685f");
+  $("vMind").textContent = S.정신;
+  $("vBody").textContent = S.체력;
+  $("stMind").className = "st" + (S.정신 < 30 ? " low" : "");
+  $("stBody").className = "st" + (S.체력 < 30 ? " low" : "");
+  $("stats").className = "panel stats" + (S.정신 < 30 || S.체력 < 30 ? " warn" : "");
+}
+
+/* ── 호감도 ── */
+function 호감(키, 양, 이유) {
+  // 규칙: 선택지는 호감을 깎지 않는다. 깎는 것은 하룻밤의 감쇠뿐이다.
+  if (양 < 0) { console.warn("음수 호감 선택지:", 키, 양, 이유); 양 = 0; }
+  const g = 그녀들[키];
+  const 전 = S.호감[키];
+  S.호감[키] = Math.max(0, Math.min(100, S.호감[키] + 양));
+
+  // 100%에 처음 닿으면 확신이 굳는다 — 더는 새어나가지 않는다
+  const 방금확정 = S.호감[키] >= 100 && 전 < 100 && !S.확정[키];
+  if (방금확정) S.확정[키] = true;
+
+  $("affName").textContent = g.이름;
+  $("affNum").textContent = S.호감[키] + "%";
+  $("affFill").style.width = S.호감[키] + "%";
+  $("aff").classList.add("on");
+  $("aff").classList.toggle("done", !!S.확정[키]);
+  $("aff").classList.remove("pop"); void $("aff").offsetWidth; $("aff").classList.add("pop");
+  if (방금확정) setTimeout(()=>{
+    const r = $("reason");
+    r.innerHTML = `<span style="color:#e2c05a;font-weight:800;font-size:19px">확신이 굳었다.</span>
+      <br><span style="color:#c9b98a">이제 이것은 흔들리지 않는다.</span>`;
+    r.classList.add("show"); clearTimeout(r._t);
+    r._t = setTimeout(()=>r.classList.remove("show"), 5200);
+  }, 900);
+
+  const el = $("gain");
+  el.className = "gain " + (양>=0 ? "up" : "down");
+  el.textContent = (양>=0 ? "♥ +" : "♥ ") + 양;
+  void el.offsetWidth; el.classList.add("go");
+
+  if (이유) {
+    const r = $("reason");
+    r.textContent = "「 " + 이유 + " 」";
+    r.classList.add("show");
+    clearTimeout(r._t); r._t = setTimeout(()=>r.classList.remove("show"), 4200);
+  }
+}
+
+/* ── 화면 ── */
+function 배경(k) { $("bg").innerHTML = BG[k] || BG.street; 오염표시(); }
+
+/* 중얼거린 횟수만큼 화면이 탁해진다. 되돌아오지 않는다. */
+function 오염표시() {
+  const n = Math.min(3, S.중얼횟수 || 0);
+  $("vn").dataset.오염 = n || "";
+  $("taint").className = "taint" + (n ? " on" + n : "");
+}
+function 인물(svg) {
+  if (!svg) { $("stand").classList.remove("in"); $("stand").innerHTML = ""; return; }
+  $("stand").innerHTML = svg;
+  setTimeout(()=>$("stand").classList.add("in"), 30);
+}
+
+function 타자(글, cb) {
+  const el = $("line"); el.textContent = ""; 완료 = false;
+  let i = 0; clearInterval(타이핑);
+  타이핑 = setInterval(()=>{
+    el.textContent = 글.slice(0, ++i);
+    if (i >= 글.length) { clearInterval(타이핑); 완료 = true; cb && cb(); }
+  }, 22);
+}
+
+/* ── 씬 재생 ──
+   씬 = { bg, 인물, 지문:[[type,text]], 선택:[...] } */
+function 씬재생(sc) {
+  clearInterval(타이핑); 완료 = true;
+  현재 = sc; 줄i = 0;
+  if (sc.bg) 배경(sc.bg);
+  인물(sc.인물 || null);
+  다음줄();
+}
+
+function 다음줄() {
+  if (!현재 || !현재.지문) return;                     // 씬이 끝난 뒤의 클릭은 무시
+  if (!완료 && 줄i > 0) {                              // 타이핑 중이면 즉시 완성
+    clearInterval(타이핑);
+    $("line").textContent = 현재.지문[줄i-1][1];
+    완료 = true; return;
+  }
+  if (줄i >= 현재.지문.length) return 현재.선택 ? 선택지띄우기() : 씬끝();
+  const [t, x] = 현재.지문[줄i++];
+  $("line").className = "line " + t;
+  $("box").classList.remove("hide");
+  타자(x);
+}
+
+/* 비용 뱃지 — 무엇을 잃는지 누르기 전에 보여준다 */
+function 비용뱃지(d) {
+  if (!d) return "";
+  const 표기 = { 돈:v=>`₩ ${v>0?"+":""}${v.toLocaleString()}`, 정신:v=>`정신 ${v>0?"+":""}${v}`, 체력:v=>`체력 ${v>0?"+":""}${v}` };
+  const 칩 = Object.keys(d).filter(k=>d[k]).map(k=>
+    `<i class="${d[k]>0?"plus":""}">${표기[k](d[k])}</i>`).join("");
+  return 칩 ? `<span class="cost">${칩}</span>` : "";
+}
+
+/* 감당할 수 없는 선택은 아예 고를 수 없다 — 이것이 하루 예산의 실체다 */
+function 못하는이유(o) {
+  const b = o.비용 || {};
+  if (b.돈 < 0 && S.돈 + b.돈 < 0) return "돈이 부족하다";
+  if (b.체력 < 0 && S.체력 + b.체력 < 0) return "그럴 기운이 없다";
+  return null;
+}
+
+function 선택지띄우기() {
+  $("box").classList.add("hide");
+  const c = $("choices"); c.className = "choices on";
+
+  // 아무것도 못 고르면 물러나는 길이 열린다
+  if (현재.선택.every(못하는이유)) {
+    현재.선택 = 현재.선택.concat([{
+      라벨: "그냥 지나친다", 호감: 0, 해석: null, 비용: {},
+      결과: [["think","오늘은 여기까지다. 몸이 말을 듣지 않는다."]]
+    }]);
+  }
+
+  c.innerHTML = 현재.선택.map((o,i)=>{
+    const 이유 = 못하는이유(o);
+    return `<button ${이유?'class="poor" disabled':`onclick="고르기(${i})"`}>${o.라벨}` +
+      `${이유?`<small>${이유}</small>`:비용뱃지(o.비용)}</button>`;
+  }).join("");
+}
+
+function 고르기(i) {
+  event.stopPropagation();
+  $("choices").className = "choices";
+  const o = 현재.선택[i], 키 = 현재.대상;
+
+  if (o.붕괴) return 붕괴처리(o.붕괴);
+  자원(o.비용);
+  if (키 && o.호감 !== undefined) 호감(키, o.호감, o.해석);
+
+  if (o.결과) {
+    clearInterval(타이핑); 완료 = true;
+    현재 = { 지문:o.결과, 대상:키 }; 줄i = 0;
+    $("box").classList.remove("hide");
+    다음줄();
+  } else 씬끝();
+}
+
+/* 씬이 끝나면 현재를 비워 재진입을 막는다. 대기 콜백도 한 번만 실행한다. */
+function 씬끝() {
+  $("box").classList.add("hide");
+  현재 = null; 완료 = true;
+  // 정신이 0이 되면 그 자리에서 무너진다. 남은 시간대는 없다.
+  if (S && !S.끝 && S.정신 <= 0) { 대기 = null; return 중얼거림(); }
+  const f = 대기 || 진행;
+  대기 = null;
+  f();
+}
+
+/* ── 진행 흐름 ── */
+function 진행() {
+  대기 = null;
+  if (S.끝) return;
+
+  // 하루 끝
+  if (S.slot >= 슬롯.length) return 하루정산();
+
+  const sl = 슬롯[S.slot];
+  const g = 그녀들[sl.그녀];
+
+  // 붕괴 조건
+  if (sl.그녀 === "듀오" && !S.붕괴 && S.day >= 4 && S.호감.듀오 >= 55) {
+    const sc = { ...g.붕괴, bg: sl.bg, 대상:"듀오" };
+    S.slot++; 대기 = 진행; return 씬재생(sc);
+  }
+
+  // 붕괴 이후의 듀오는 계속/포기에 따라 갈리고, 그 외에는 확신 여부로 갈린다
+  let sc;
+  if (sl.그녀 === "듀오" && S.듀오상태)
+    sc = 뽑기(S.듀오상태 === "포기" ? g.관전풀 : g.계속풀);
+  else
+    sc = (S.확정[sl.그녀] && g.확정풀) ? 뽑기(g.확정풀) : (g.고정[S.day] || 뽑기(g.풀));
+  S.직전 = sl.그녀;
+  S.slot++;
+  $("affName").textContent = g.이름;
+  $("affNum").textContent = S.호감[sl.그녀] + "%";
+  $("affFill").style.width = S.호감[sl.그녀] + "%";
+  $("aff").classList.add("on");
+  $("aff").classList.toggle("done", !!S.확정[sl.그녀]);
+  대기 = 이벤트단계;
+  씬재생({ ...sc, bg: sl.bg, 인물: g.인물없음 ? null : g.실루엣, 대상: sl.그녀 });
+}
+
+const 직전씬 = new WeakMap();
+function 뽑기(풀) {
+  if (!풀 || 풀.length < 2) return 풀 && 풀[0];
+  const 전 = 직전씬.get(풀);
+  let i;
+  do { i = Math.floor(Math.random() * 풀.length); } while (i === 전);
+  직전씬.set(풀, i);
+  return 풀[i];
+}
+
+/* 슬롯 사이 랜덤 이벤트 */
+/* ── 미니게임 ──
+   규격: MINI.이름.시작(완료콜백) 으로 화면을 점유했다가,
+        결과를 자원에 반영하고 마무리 장면을 재생한 뒤 콜백으로 돌아온다. */
+const MINI = {};
+
+/* 기다리기 — 준하가 전화를 받으러 사라졌다.
+   누를 때마다 조금씩 닳는다. 그리고 아주 낮은 확률로, 정말 돌아온다. */
+MINI.기다리기 = (() => {
+  const 최대 = 12, 복귀확률 = 0.04;
+  let n, 분, 쓴체력, 콜백;
+
+  const 풍경 = [
+    "그는 골목 모서리에 서 있다. 이쪽을 보지 않는다.",
+    "통화는 아직 끝나지 않았다. 고개를 숙이고 있다.",
+    "발끝으로 바닥을 툭툭 치고 있다. 길어지는 모양이다.",
+    "해가 조금 기울었다. 그는 같은 자리에 있다.",
+    "무슨 말을 하는지는 들리지 않는다. 목소리만 이어진다.",
+    "가게 간판에 불이 들어왔다.",
+    "이제 그가 거기 있는지도 잘 보이지 않는다."
+  ];
+
+  function 시작(cb) {
+    콜백 = cb; n = 0; 분 = 0; 쓴체력 = 0;
+    $("waitbar").classList.add("on");
+    그리기();
+  }
+
+  /* 얼마나 서 있었는지 보여준다. 끝에 가까워질수록 붉어진다. */
+  function 게이지() {
+    const p = n / 최대;
+    $("wv").textContent = 분 + "분";
+    $("wv").style.color = p < .5 ? "#ded6ec" : p < .84 ? "#e2c05a" : "#e8756c";
+    const f = $("wfill");
+    f.style.width = (p * 100) + "%";
+    f.style.background = p < .5
+      ? "linear-gradient(90deg,#4e4770,#8b78e6)"
+      : p < .84 ? "linear-gradient(90deg,#8b6a3a,#e2c05a)"
+                : "linear-gradient(90deg,#8a3a34,#e8756c)";
+    $("wnote").textContent = 쓴체력 ? `지금까지 체력 −${쓴체력}` : "";
+  }
+
+  function 그리기() {
+    $("box").classList.remove("hide");
+    $("name").className = "name hidden";
+    $("line").className = "line narr";
+    $("line").textContent = 풍경[Math.min(Math.floor(n / 2), 풍경.length - 1)];
+    $("next").style.display = "none";
+    게이지();
+    const 다음소모 = 2 + Math.floor(n / 4);      // 길어질수록 한 번이 더 비싸진다
+    const c = $("choices"); c.className = "choices on";
+    c.innerHTML =
+      `<button onclick="MINI.기다리기.누름()">계속 기다린다 <span style="color:#8b849b;font-weight:400">(5분)</span>` +
+        `<small><span style="color:#e2c05a">낮은 확률로 그가 돌아온다</span>` +
+        `${분 ? ` · 지금까지 ${분}분` : ""}</small>` +
+        비용뱃지({ 체력: -다음소모, 정신: -1 }) + `</button>` +
+      `<button onclick="MINI.기다리기.간다()">${n === 0 ? "그냥 간다" : "그만 간다"}` +
+        `<small>기다린 시간은 돌아오지 않는다</small></button>`;
+  }
+
+  function 누름() {
+    event.stopPropagation();
+    const 소모 = 2 + Math.floor(n / 4);          // 길어질수록 더 닳는다
+    쓴체력 += 소모; n++; 분 += 5;
+    자원({ 체력: -소모, 정신: -1 });
+
+    if (Math.random() < 복귀확률) return 돌아옴();
+    if (n >= 최대) return 안옴();
+    그리기();
+  }
+
+  function 간다() { event.stopPropagation(); 포기(); }
+
+  function 마무리(지문) {
+    $("choices").className = "choices";
+    $("waitbar").classList.remove("on");
+    $("next").style.display = "";
+    대기 = 콜백;
+    씬재생({ bg: "street", 인물: null, 대상: null, 지문 });
+  }
+
+  function 돌아옴() {
+    자원({ 정신: 26 });
+    자원팝업({ 정신: 26 });
+    마무리([
+      ["narr", `${분}분 만에, 골목에서 준하가 걸어나왔다.`],
+      ["say", "준하: \"미안. 오래 걸렸네.\""],
+      ["say", "준하: \"야, 밥 먹었냐?\""],
+      ["narr", "그게 전부였다. 그런데 그 말이 이상하게 오래 남았다."],
+      ["sys", "정신력이 크게 돌아왔다. (+26)"]
+    ]);
+  }
+
+  function 안옴() {
+    자원({ 정신: -7 });
+    마무리([
+      ["narr", "한 시간이 지났다."],
+      ["narr", "골목에는 아무도 없었다. 언제 갔는지 모르겠다."],
+      ["think", "누군가에게 소환당하는 놈과, 아무에게도 소환당하지 않는 나."]
+    ]);
+  }
+
+  function 포기() {
+    마무리(n === 0
+      ? [["narr", "나는 그냥 걸었다."], ["think", "기다릴 이유가 없다. 나는 기다리는 쪽이 아니다."]]
+      : n < 5
+        ? [["narr", `${분}분쯤 서 있다가 돌아섰다.`], ["think", "바쁜 놈이니까."]]
+        : [["narr", `${분}분을 서 있었다. 그리고 돌아섰다.`],
+           ["think", "…바쁜 놈이니까."],
+           ["narr", "그렇게 생각하려고 했다."]]);
+  }
+
+  return { 시작, 누름, 간다 };
+})();
+
+/* 개발용 — 주소 끝에 #이벤트id 를 붙이면 그 이벤트가 처음 한 번 강제로 뜬다.
+   예) week.html#준하_전화   week.html#손날좌_불쾌 */
+let 강제이벤트 = decodeURIComponent((location.hash || "").slice(1)) || null;
+
+/* 캔버스 미니게임이 화면을 독점하는 동안 본편 HUD를 감춘다 */
+const 미니화면 = on => $("vn").classList.toggle("미니", on);
+
+/* ── 타이핑 (소개팅 최종 미니게임) ──
+   그녀가 먼저 말한다. 제한 시간 안에 답을 쳐야 한다. */
+const 타이핑설정 = {
+  대사: "나 너 좋아해",
+  답: "사귀자",
+  제한: 4200        // ms
+};
+
+MINI.타이핑 = (() => {
+  let 콜백, 시작시각, raf, 끝남;
+
+  function 시작(cb) {
+    콜백 = cb; 끝남 = false;
+    $("box").classList.add("hide");
+    $("choices").className = "choices";
+    $("typing").className = "typing on";
+    $("tySaid").textContent = `"${타이핑설정.대사}"`;
+    $("tyHint").innerHTML = `<b>${타이핑설정.답}</b> 라고 친다`;
+    const inp = $("tyInput");
+    inp.value = ""; inp.disabled = false;
+    inp.oninput = 확인;
+    inp.onkeydown = e => { e.stopPropagation(); if (e.key === "Enter") 확인(); };
+    inp.onpointerdown = e => e.stopPropagation();
+    setTimeout(() => inp.focus(), 60);
+    시작시각 = performance.now();
+    루프();
+  }
+
+  function 확인() {
+    if (끝남) return;
+    const v = $("tyInput").value.replace(/\s/g, "");
+    if (v === 타이핑설정.답) return 끝(true);
+    if (v.length >= 타이핑설정.답.length && !타이핑설정.답.startsWith(v.slice(0, 1))) {
+      $("typing").className = "typing on 틀림";
+      setTimeout(() => { if (!끝남) $("typing").className = "typing on"; }, 300);
+    }
+  }
+
+  function 루프() {
+    if (끝남) return;
+    const 남 = Math.max(0, 타이핑설정.제한 - (performance.now() - 시작시각));
+    $("tyBar").style.width = (남 / 타이핑설정.제한 * 100) + "%";
+    $("tyLeft").textContent = (남 / 1000).toFixed(1) + "초";
+    if (남 <= 0) return 끝(false);
+    raf = requestAnimationFrame(루프);
+  }
+
+  function 끝(성공) {
+    끝남 = true; cancelAnimationFrame(raf);
+    const inp = $("tyInput");
+    inp.disabled = true; inp.oninput = null; inp.onkeydown = null; inp.blur();
+    $("typing").className = "typing";
+    setTimeout(() => 콜백(성공), 450);
+  }
+
+  return { 시작 };
+})();
+
+/* ── 훔쳐보기 (엘리베이터의 그녀 · 최종 미니게임) ──
+   계단을 따라 내려간다. 그녀가 휴대폰을 옆으로 내미는 순간에만 화면이 보인다.
+   5번 중 3번 잡으면 통과. */
+const 훔쳐설정 = {
+  판수: 5, 필요: 5,   // 한 번이라도 놓치면 그 자리에서 끝난다
+  제한: 1900,        // 한 판에 주어지는 시간(ms)
+  // 판마다 값이 달라진다. 보이는 쪽(좌/우)도 매번 바뀐다.
+  문턱: 0.58, 문턱증가: 0.068, 문턱흔들: 0.09,   // 팔이 이만큼 넘게 나가야 보인다
+  속도: 0.046, 속도증가: 0.010, 속도흔들: 0.34
+};
+
+MINI.훔쳐보기 = (() => {
+  let G, raf, 콜백, 키;
+
+  function 시작(cb) {
+    콜백 = cb;
+    미니화면(true);
+    $("box").classList.add("hide");
+    $("choices").className = "choices";
+    $("bg").innerHTML = `<canvas id="cv" width="1280" height="640"></canvas>`;
+    G = { 상태:"대기", 판:0, 성공:0, t:0, 위상:Math.random()*6, 판시작:0, 결과:null, 로그:[] };
+    입력(true);
+    $("shellhud").className = "shellhud on";
+    $("shellhud").innerHTML = `<b>계단</b>` +
+      `<small>그녀가 휴대폰을 옆으로 내미는 순간에만 보인다.<br>` +
+      `<span style="color:#e8756c">한 번이라도 놓치면 끝난다</span> ` +
+      `<span style="color:#e2c05a">${훔쳐설정.판수}번 연속</span></small>`;
+    $("choices").className = "choices on";
+    $("choices").innerHTML = `<button onclick="MINI.훔쳐보기.개시()">한 계단 뒤에서 따라간다</button>`;
+    그리기();
+  }
+
+  function 개시() {
+    if (event) event.stopPropagation();
+    $("shellhud").className = "shellhud";
+    $("choices").className = "choices";
+    G.상태 = "진행"; 새판();
+    루프();
+  }
+
+  function 새판() {
+    G.판시작 = performance.now(); G.결과 = null;
+    G.위상 = Math.random() * 6;
+    G.방향 = Math.random() < .5 ? -1 : 1;          // 이번 판에 화면이 보이는 쪽
+    const 흔1 = (Math.random() - .5) * 2 * 훔쳐설정.문턱흔들;
+    const 흔2 = (Math.random() - .5) * 2 * 훔쳐설정.속도흔들;
+    G.문턱 = Math.min(.80, Math.max(.30,
+      훔쳐설정.문턱 + G.판 * 훔쳐설정.문턱증가 + 흔1));
+    G.속도 = (훔쳐설정.속도 + G.판 * 훔쳐설정.속도증가) * (1 + 흔2);
+  }
+
+  const 문턱 = () => G.문턱 ?? 훔쳐설정.문턱;
+  const 속도 = () => G.속도 ?? 훔쳐설정.속도;
+  const 값   = () => Math.sin(G.t * 속도() + G.위상);        // -1 왼쪽 … +1 오른쪽
+  const 노출 = () => 값() * (G.방향 || 1);                    // 보이는 쪽으로 얼마나 나갔나
+
+  function 본다() {
+    if (G.상태 !== "진행" || G.결과) return;
+    const 보임 = 노출() > 문턱();
+    G.결과 = 보임 ? "봤다" : "못 봤다";
+    if (보임) G.성공++;
+    G.로그.push(G.결과);
+    setTimeout(보임 ? 다음판 : 끝, 900);   // 한 번 놓치면 거기서 끝
+  }
+
+  function 다음판() {
+    G.판++;
+    if (G.판 >= 훔쳐설정.판수) return 끝();
+    새판();
+  }
+
+  function 입력(on) {
+    if (on) {
+      키 = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); 본다(); } };
+      addEventListener("keydown", 키);
+      $("bg").onpointerdown = e => { e.stopPropagation(); 본다(); };
+    } else { removeEventListener("keydown", 키); $("bg").onpointerdown = null; }
+  }
+
+  function 루프() {
+    if (G.상태 !== "진행") return;
+    G.t++;
+    if (!G.결과 && performance.now() - G.판시작 > 훔쳐설정.제한) {
+      G.결과 = "놓쳤다"; G.로그.push(G.결과); setTimeout(끝, 900);
+    }
+    그리기();
+    raf = requestAnimationFrame(루프);
+  }
+
+  function 그리기() {
+    const cv = $("cv"); if (!cv) return;
+    const x = cv.getContext("2d"), w = 640, h = 320;
+    x.setTransform(2, 0, 0, 2, 0, 0);
+    const p = 값(), v = 노출(), 문 = 문턱(), 방 = G.방향 || 1;
+    const 내려감 = (G.상태 === "진행" ? G.t : 0) * 1.5;
+
+    // ── 계단실 ──
+    const 벽 = x.createLinearGradient(0, 0, w, 0);
+    벽.addColorStop(0, "#2c2f39"); 벽.addColorStop(.5, "#1b1d24"); 벽.addColorStop(1, "#2c2f39");
+    x.fillStyle = 벽; x.fillRect(0, 0, w, h);
+    x.globalAlpha = .12; x.fillStyle = "#fff4d8"; x.fillRect(250, 0, 140, 10); x.globalAlpha = 1;
+    x.fillStyle = "#ffffff09"; x.fillRect(250, 0, 140, 6);
+
+    // 계단 — 내려가면서 위로 흐른다
+    for (let i = -1; i < 9; i++) {
+      const 오 = (내려감 * 1.1) % 44;
+      const y = 96 + i * 44 + 오;
+      const 폭 = 120 + (y - 96) * 1.55;
+      x.fillStyle = i % 2 ? "#3a3d47" : "#33363f";
+      x.fillRect(320 - 폭/2, y, 폭, 30);
+      x.fillStyle = "#14161c";
+      x.fillRect(320 - 폭/2, y + 30, 폭, 8);
+    }
+    x.strokeStyle = "#4a4e59"; x.lineWidth = 5;
+    x.beginPath(); x.moveTo(96, 120); x.lineTo(-10, h); x.stroke();
+    x.beginPath(); x.moveTo(544, 120); x.lineTo(650, h); x.stroke();
+    x.strokeStyle = "#2a2d35"; x.lineWidth = 3;
+    for (let i = 0; i < 7; i++) {
+      const 오 = (내려감 * 1.1) % 52, yy = 130 + i * 52 + 오;
+      const dx = (yy - 120) * 0.42;
+      x.beginPath(); x.moveTo(96 - dx, yy); x.lineTo(96 - dx, yy + 40); x.stroke();
+      x.beginPath(); x.moveTo(544 + dx, yy); x.lineTo(544 + dx, yy + 40); x.stroke();
+    }
+
+    // ── 그녀 — 한 계단 아래에서 등을 보이고 내려간다 ──
+    const cx = 322, by = 268, 흔 = Math.sin(G.t * .11) * 3;
+    x.save(); x.translate(0, 흔);
+    x.fillStyle = "#0c0b12";
+    x.beginPath();
+    x.moveTo(cx-34, by); x.lineTo(cx-30, by-92);
+    x.quadraticCurveTo(cx, by-112, cx+30, by-92); x.lineTo(cx+34, by); x.fill();
+    x.beginPath(); x.arc(cx, by-136, 24, 0, 7); x.fill();
+    x.beginPath(); x.ellipse(cx-2, by-108, 20, 34, .06, 0, 7); x.fill();
+
+    // 휴대폰을 든 팔 — 좌우로 오간다. 보이는 쪽으로 나갔을 때만 화면이 이쪽을 향한다
+    const ax = cx + p * 58, ay = by - 74 - Math.abs(p) * 8;
+    x.strokeStyle = "#0c0b12"; x.lineWidth = 13; x.lineCap = "round";
+    x.beginPath(); x.moveTo(cx + (p > 0 ? 22 : -22), by - 84); x.lineTo(ax, ay); x.stroke();
+    x.lineCap = "butt";
+
+    const 밝기 = Math.max(0, v);                    // 반대쪽으로 가면 몸에 가려 안 보인다
+    x.save(); x.translate(ax, ay); x.rotate(방 * (-0.18 - Math.abs(p) * 0.5));
+    x.fillStyle = "#07060b"; x.fillRect(-11, -19, 22, 38);
+    x.fillStyle = "rgba(178,214,255," + (0.12 + 밝기 * 0.8) + ")";
+    x.fillRect(-9, -17, 18, 34);
+    if (밝기 > .35) {
+      x.fillStyle = "rgba(255,255,255," + ((밝기-.35)*0.7) + ")";
+      x.fillRect(-6, -12, 12, 3); x.fillRect(-6, -5, 9, 3); x.fillRect(-6, 2, 11, 3);
+    }
+    x.restore();
+    const 번짐 = x.createRadialGradient(ax, ay, 3, ax, ay, 60);
+    번짐.addColorStop(0, "rgba(150,200,255," + (0.05 + 밝기*0.2) + ")");
+    번짐.addColorStop(1, "rgba(150,200,255,0)");
+    x.fillStyle = 번짐; x.beginPath(); x.arc(ax, ay, 60, 0, 7); x.fill();
+    x.restore();
+
+    const 어둠 = x.createRadialGradient(320, 190, 70, 320, 190, 300);
+    어둠.addColorStop(0, "#00000000"); 어둠.addColorStop(1, "#000000aa");
+    x.fillStyle = 어둠; x.fillRect(0, 0, w, h);
+
+    // ── 계기 ──
+    // 계기 — 가운데가 몸통, 좌우 끝이 팔을 뻗은 자리. 안전 구간은 매 판 좌우가 바뀐다
+    const bw = 260, bx = (w-bw)/2, gy = 288;
+    const 위치 = bx + bw * (p + 1) / 2;
+    x.fillStyle = "#00000077"; x.fillRect(bx, gy, bw, 12);
+    const zs = 방 > 0 ? bx + bw * (문 + 1) / 2 : bx;
+    const zw = bw * (1 - 문) / 2;
+    x.fillStyle = "#7fc48f44"; x.fillRect(zs, gy, zw, 12);
+    x.fillStyle = "#7fc48f";
+    x.fillRect(방 > 0 ? zs - 1.5 : zs + zw - 1.5, gy - 3, 3, 18);
+    x.fillStyle = "#ffffff1a"; x.fillRect(bx + bw/2 - 1, gy, 2, 12);
+    x.fillStyle = v > 문 ? "#7fc48f" : "#8b849b";
+    x.fillRect(위치 - 5, gy - 4, 10, 20);
+    x.fillStyle = "#8b849b"; x.font = "600 11px system-ui"; x.textAlign = "center";
+    x.fillText("보이는 각도", zs + zw/2, gy - 8);
+
+    x.font = "700 14px system-ui";
+    for (let i = 0; i < 훔쳐설정.판수; i++) {
+      const r = G.로그[i];
+      x.fillStyle = !r ? "#3a3548" : r === "봤다" ? "#7fc48f" : "#e8756c";
+      x.beginPath(); x.arc(w/2 - 44 + i*22, 30, 6, 0, 7); x.fill();
+    }
+    x.fillStyle = "#e8ecf2";
+    x.fillText(G.성공 + " / " + 훔쳐설정.필요, w/2 + 82, 35);
+
+    if (G.결과) {
+      x.font = "800 22px system-ui";
+      x.fillStyle = G.결과 === "봤다" ? "#7fc48f" : "#e8756c";
+      x.fillText(G.결과, w/2, 152);
+    }
+    x.textAlign = "start";
+  }
+
+  function 끝() {
+    G.상태 = "끝"; cancelAnimationFrame(raf); 입력(false); 미니화면(false);
+    $("shellhud").className = "shellhud";
+    setTimeout(() => 콜백(G.성공 >= 훔쳐설정.필요, G.성공), 500);
+  }
+
+  return { 시작, 개시 };
+})();
+
+/* ── 균형 (횟집 최종 미니게임) ──
+   회 접시를 들고 홀을 가로지른다. 계속 기울고, 좌우로 받쳐야 한다. */
+const 균형설정 = {
+  거리: 100,        // 도착까지
+  속도: 0.145,      // 프레임당 진행 (약 11.5초)
+  불안정: 0.00105,  // 기울수록 더 빨리 기운다
+  감쇠: 0.986,      // 저절로 잦아드는 정도 (클수록 어렵다)
+  조작: 0.040,      // 방향키 한 프레임당 되돌리는 힘
+  한계: 42,         // 이 각도를 넘으면 쏟는다
+  외란주기: 125,    // 흔들림이 오는 간격(프레임)
+  외란세기: 0.19
+};
+
+MINI.균형 = (() => {
+  let G, raf, 콜백, 키다운, 키업;
+
+  function 시작(cb) {
+    콜백 = cb;
+    미니화면(true);
+    $("box").classList.add("hide");
+    $("choices").className = "choices";
+    $("bg").innerHTML = `<canvas id="cv" width="1280" height="640"></canvas>`;
+    G = { 상태:"대기", 각:0, 각속:0, 진행:0, t:0, 좌:false, 우:false, 흔들:0 };
+    입력(true);
+    $("shellhud").className = "shellhud on";
+    $("shellhud").innerHTML = `<b>회 접시를 들고 간다</b>` +
+      `<small>← → 로 받쳐서 넘어뜨리지 않는다<br>` +
+      `<span style="color:#e2c05a">${균형설정.한계}도를 넘기면 쏟는다.</span></small>`;
+    $("choices").className = "choices on";
+    $("choices").innerHTML = `<button onclick="MINI.균형.개시()">든다</button>`;
+    그리기();
+  }
+
+  function 개시() {
+    if (event) event.stopPropagation();
+    $("shellhud").className = "shellhud";
+    $("choices").className = "choices";
+    G.상태 = "진행"; G.각속 = (Math.random() - .5) * 0.5;
+    루프();
+  }
+
+  function 입력(on) {
+    if (on) {
+      키다운 = e => {
+        if (e.key === "ArrowLeft" || e.key === "a") { e.preventDefault(); G.좌 = true; }
+        if (e.key === "ArrowRight" || e.key === "d") { e.preventDefault(); G.우 = true; }
+      };
+      키업 = e => {
+        if (e.key === "ArrowLeft" || e.key === "a") G.좌 = false;
+        if (e.key === "ArrowRight" || e.key === "d") G.우 = false;
+      };
+      addEventListener("keydown", 키다운); addEventListener("keyup", 키업);
+      $("bg").onpointerdown = e => {
+        const r = $("bg").getBoundingClientRect();
+        if ((e.clientX - r.left) / r.width < .5) G.좌 = true; else G.우 = true;
+      };
+      $("bg").onpointerup = () => { G.좌 = G.우 = false; };
+      $("bg").onpointerleave = () => { G.좌 = G.우 = false; };
+    } else {
+      removeEventListener("keydown", 키다운); removeEventListener("keyup", 키업);
+      $("bg").onpointerdown = null; $("bg").onpointerup = null; $("bg").onpointerleave = null;
+    }
+  }
+
+  function 루프() {
+    if (G.상태 !== "진행") return;
+    G.t++;
+    G.진행 += 균형설정.속도;
+
+    G.각속 += G.각 * 균형설정.불안정;                    // 기울수록 더 기운다
+    if (G.좌) G.각속 -= 균형설정.조작;
+    if (G.우) G.각속 += 균형설정.조작;
+    if (G.t % 균형설정.외란주기 === 0) {                 // 누가 스치고 지나간다
+      G.각속 += (Math.random() - .5) * 2 * 균형설정.외란세기;
+      G.흔들 = 12;
+    }
+    G.각속 *= 균형설정.감쇠;
+    G.각 += G.각속;
+    if (G.흔들 > 0) G.흔들--;
+
+    if (Math.abs(G.각) >= 균형설정.한계) return 끝(false);
+    if (G.진행 >= 균형설정.거리) return 끝(true);
+    그리기();
+    raf = requestAnimationFrame(루프);
+  }
+
+  function 그리기() {
+    const cv = $("cv"); if (!cv) return;
+    const x = cv.getContext("2d"), w = 640, h = 320;
+    x.setTransform(2, 0, 0, 2, 0, 0);
+    const 흔 = G.흔들 > 0 ? (Math.random() - .5) * 5 : 0;
+    x.save(); x.translate(흔, 0);
+
+    // 홀 — 걸어가는 동안 배경이 흐른다
+    const 오프 = -G.진행 * 4.2;
+    x.fillStyle = "#20262c"; x.fillRect(0, 0, w, h);
+    x.fillStyle = "#151a1f"; x.fillRect(0, 0, w, 128);
+    for (let i = 0; i < 7; i++) {                                  // 수조
+      const bx = ((i * 190 + 오프) % 1330) - 190;
+      x.fillStyle = "#1d4a56"; x.fillRect(bx, 34, 150, 92);
+      x.fillStyle = "#2f7d8e"; x.fillRect(bx + 6, 40, 138, 80);
+      x.fillStyle = "#8fe6f5"; x.globalAlpha = .16;
+      x.fillRect(bx + 12, 42, 22, 76); x.globalAlpha = 1;
+      x.fillStyle = "#0e2a33";
+      x.beginPath(); x.ellipse(bx + 62, 88, 22, 8, 0, 0, 7); x.fill();
+    }
+    x.fillStyle = "#2c2118"; x.fillRect(0, 126, w, 12);
+    x.fillStyle = "#3a2c20"; x.fillRect(0, 138, w, h - 138);       // 마루
+    x.strokeStyle = "#2a2018"; x.lineWidth = 2;
+    for (let i = 0; i < 9; i++) {
+      const lx = ((i * 96 + 오프 * 1.7) % 864) - 96;
+      x.beginPath(); x.moveTo(lx, 138); x.lineTo(lx - 40, h); x.stroke();
+    }
+    for (let i = 0; i < 5; i++) {                                  // 테이블
+      const tx = ((i * 260 + 오프 * 1.35) % 1300) - 260;
+      x.fillStyle = "#4a3b2a"; x.fillRect(tx, 150, 120, 14);
+      x.fillStyle = "#33281c"; x.fillRect(tx + 12, 164, 10, 30); x.fillRect(tx + 98, 164, 10, 30);
+    }
+
+    // 손과 접시
+    const px = 320, py = 250, 라 = G.각 * Math.PI / 180;
+    x.save(); x.translate(px, py); x.rotate(라);
+    x.fillStyle = "#c9c3b4";                                        // 쟁반
+    x.beginPath(); x.ellipse(0, 0, 96, 15, 0, 0, 7); x.fill();
+    x.fillStyle = "#e6e1d4"; x.beginPath(); x.ellipse(0, -5, 92, 13, 0, 0, 7); x.fill();
+    for (let i = -3; i <= 3; i++) {                                 // 회 조각들
+      const sx = i * 24 + G.각 * 1.15;
+      x.fillStyle = i % 2 ? "#e88f86" : "#f0a79c";
+      x.beginPath(); x.ellipse(sx, -13, 13, 6.5, G.각 * .012, 0, 7); x.fill();
+      x.fillStyle = "#ffffff44";
+      x.beginPath(); x.ellipse(sx - 3, -15, 6, 2.4, 0, 0, 7); x.fill();
+    }
+    x.restore();
+    x.fillStyle = "#161a1f";                                        // 두 손
+    x.beginPath(); x.ellipse(px - 74, py + 16, 26, 15, .25, 0, 7); x.fill();
+    x.beginPath(); x.ellipse(px + 74, py + 16, 26, 15, -.25, 0, 7); x.fill();
+
+    // 기울기 계기
+    const 비 = G.각 / 균형설정.한계;
+    x.fillStyle = "#00000066"; x.fillRect(w/2 - 110, 296, 220, 10);
+    x.fillStyle = "#ffffff22"; x.fillRect(w/2 - 1.5, 294, 3, 14);
+    x.fillStyle = Math.abs(비) > .72 ? "#e8756c" : Math.abs(비) > .45 ? "#e2c05a" : "#7fc48f";
+    x.fillRect(w/2 - 6 + 비 * 105, 293, 12, 16);
+
+    // 진행
+    x.fillStyle = "#00000055"; x.fillRect(0, h - 7, w, 7);
+    x.fillStyle = "#7f6ddb"; x.fillRect(0, h - 7, w * (G.진행 / 균형설정.거리), 7);
+    x.fillStyle = "#ffffffcc"; x.font = "600 13px system-ui"; x.textAlign = "center";
+    x.fillText(`${Math.round(G.각)}°`, w/2, 288);
+    x.textAlign = "start";
+    x.restore();
+  }
+
+  function 끝(성공) {
+    G.상태 = "끝"; cancelAnimationFrame(raf); 입력(false); 미니화면(false);
+    $("shellhud").className = "shellhud";
+    setTimeout(() => 콜백(성공), 550);
+  }
+
+  return { 시작, 개시 };
+})();
+
+/* ── 가위눌림 (귀신 최종 미니게임) ──
+   연타하면 빠져나온다. 그런데 빠져나오면 이어지지 못한다.
+   손을 놓고 버티는 쪽이 이어지는 길이다. */
+const 가위설정 = {
+  제한: 6500,   // 버텨야 하는 시간 (ms)
+  한번: 8.0,    // 연타 한 번당 차는 양
+  감소: 0.50,   // 프레임당 빠지는 양 (초당 30)
+  탈출: 100     // 이만큼 차면 빠져나온다
+};
+
+MINI.가위눌림 = (() => {
+  let G, raf, 콜백, 키눌림;
+
+  function 시작(cb) {
+    콜백 = cb;
+    미니화면(true);
+    $("box").classList.add("hide");
+    $("choices").className = "choices";
+    $("bg").innerHTML = `<canvas id="cv" width="1280" height="640"></canvas>`;
+    G = { 상태:"대기", 게이지:0, 시작시각:0, 파동:[], t:0 };
+    입력(true);
+    $("shellhud").className = "shellhud on";
+    $("shellhud").innerHTML = `<b>몸이 움직이지 않는다</b>` +
+      `<small>가슴 위에 무게가 있다. 머리카락이 얼굴에 닿는다.<br>` +
+      `<span style="color:#e2c05a">${가위설정.제한/1000}초. 연타하면 빠져나올 수 있다.</span></small>`;
+    $("choices").className = "choices on";
+    $("choices").innerHTML = `<button onclick="MINI.가위눌림.개시()">눈을 뜬다</button>`;
+    그리기(0);
+  }
+
+  function 개시() {
+    if (event) event.stopPropagation();
+    $("shellhud").className = "shellhud";
+    $("choices").className = "choices";
+    G.상태 = "진행"; G.시작시각 = performance.now();
+    루프();
+  }
+
+  function 몸부림() {
+    if (G.상태 !== "진행") return;
+    G.게이지 = Math.min(가위설정.탈출, G.게이지 + 가위설정.한번);
+    G.파동.push({ t: performance.now() });
+    if (G.게이지 >= 가위설정.탈출) 끝(false);        // 빠져나옴 = 이어지지 못함
+  }
+
+  function 입력(on) {
+    if (on) {
+      // e.repeat 을 막아야 '꾹 누르기'가 연타로 인정되지 않는다
+      키눌림 = e => {
+        if (e.key !== " " && e.key !== "Enter") return;
+        e.preventDefault();
+        if (e.repeat) return;
+        몸부림();
+      };
+      addEventListener("keydown", 키눌림);
+      $("bg").onpointerdown = e => { e.stopPropagation(); 몸부림(); };
+    } else {
+      removeEventListener("keydown", 키눌림);
+      $("bg").onpointerdown = null;
+    }
+  }
+
+  function 루프() {
+    if (G.상태 !== "진행") return;
+    const 경과 = performance.now() - G.시작시각;
+    if (경과 >= 가위설정.제한) return 끝(true);      // 끝까지 버팀 = 이어짐
+    G.게이지 = Math.max(0, G.게이지 - 가위설정.감소);
+    그리기(경과);
+    raf = requestAnimationFrame(루프);
+  }
+
+  function 그리기(경과) {
+    const cv = $("cv"); if (!cv) return;
+    const x = cv.getContext("2d"), w = 640, h = 320;
+    x.setTransform(2, 0, 0, 2, 0, 0);
+    G.t++;
+
+    const 숨 = Math.sin(G.t / 34) * 0.5 + 0.5;
+    const 힘 = G.게이지 / 가위설정.탈출;
+
+    // ── 달빛 든 방 ── 형체가 검게 보이려면 방이 밝아야 한다
+    const 방 = x.createLinearGradient(640, 0, 60, 320);
+    방.addColorStop(0, "#3c4560"); 방.addColorStop(.45, "#242a3c"); 방.addColorStop(1, "#14161f");
+    x.fillStyle = 방; x.fillRect(0, 0, w, h);
+
+    x.strokeStyle = "#ffffff0e"; x.lineWidth = 2;              // 천장 결
+    for (let i = 0; i < 7; i++) {
+      x.beginPath(); x.moveTo(0, 34 + i*42); x.lineTo(w, 26 + i*42); x.stroke();
+    }
+
+    // 창문 — 빛의 출처
+    x.fillStyle = "#5f6d8f"; x.fillRect(506, 18, 112, 86);
+    x.fillStyle = "#8e9bc0"; x.fillRect(510, 22, 104, 78);
+    x.fillStyle = "#2a3145";
+    x.fillRect(558, 22, 6, 78); x.fillRect(510, 57, 104, 6);
+    x.strokeStyle = "#69769a"; x.lineWidth = 3; x.strokeRect(506, 18, 112, 86);
+    const 달 = x.createRadialGradient(562, 60, 10, 562, 60, 240);
+    달.addColorStop(0, "#c3cfef44"); 달.addColorStop(1, "#c3cfef00");
+    x.fillStyle = 달; x.fillRect(0, 0, w, h);
+
+    // 창틀 그림자가 천장에 길게 눕는다
+    x.fillStyle = "#aab6d81a";
+    x.beginPath(); x.moveTo(120, h); x.lineTo(250, 120); x.lineTo(410, 120); x.lineTo(330, h); x.fill();
+
+    // ── 형체 ── 소복 입은 것이 위에서 내려다본다
+    // 몸부림칠수록 물러나고, 손을 놓을수록 얼굴 가까이 내려온다
+    const 접근 = (1 - 힘) * 26 + 숨 * 5;
+    const cx = 320, cy = 44 + 접근;
+    const 떨림 = (G.t % 97 < 3) ? (Math.random() - .5) * 3 : 0;   // 가끔 흔들린다
+
+    x.save();
+    x.translate(떨림, 0);
+    x.globalAlpha = 0.74 + (1 - 힘) * 0.2;
+
+    const 뿌옇 = x.createRadialGradient(cx, cy, 20, cx, cy, 210);  // 주변 발광
+    뿌옇.addColorStop(0, "#cdd6ea33"); 뿌옇.addColorStop(1, "#cdd6ea00");
+    x.fillStyle = 뿌옇; x.fillRect(0, 0, w, h);
+
+    const 옷 = x.createLinearGradient(cx, cy - 90, cx, cy + 130);  // 아래로 흩어지는 소복
+    옷.addColorStop(0, "#eef0f6"); 옷.addColorStop(.55, "#c2c8da"); 옷.addColorStop(1, "#8f96ad00");
+    x.fillStyle = 옷;
+    x.beginPath();                                                 // 왼 소매
+    x.moveTo(cx-100, cy+8); x.quadraticCurveTo(cx-164, cy+84, cx-152, h);
+    x.lineTo(cx-212, h); x.quadraticCurveTo(cx-202, cy+66, cx-134, cy-10); x.fill();
+    x.beginPath();                                                 // 오른 소매
+    x.moveTo(cx+100, cy+8); x.quadraticCurveTo(cx+164, cy+84, cx+152, h);
+    x.lineTo(cx+212, h); x.quadraticCurveTo(cx+202, cy+66, cx+134, cy-10); x.fill();
+    x.beginPath(); x.ellipse(cx, cy-26, 114, 58, 0, 0, 7); x.fill();  // 어깨
+
+    x.fillStyle = "#e4e7f0";                                       // 얼굴
+    x.beginPath(); x.ellipse(cx, cy+22, 33, 39, 0, 0, 7); x.fill();
+    x.fillStyle = "#0b0d15";                                       // 검은 눈구멍
+    x.beginPath(); x.ellipse(cx-12, cy+18, 5.5, 9, .1, 0, 7); x.fill();
+    x.beginPath(); x.ellipse(cx+12, cy+18, 5.5, 9, -.1, 0, 7); x.fill();
+    x.fillStyle = "#1a1c26";
+    x.beginPath(); x.ellipse(cx, cy+40, 4, 6, 0, 0, 7); x.fill();   // 벌어진 입
+
+    // ── 머리카락 ── 얼굴을 덮으며 아래로 쏟아진다
+    x.fillStyle = "#05060c";
+    for (let i = -8; i <= 8; i++) {
+      const ox = i * 5.6;
+      const 길 = 118 + Math.cos(i * .42) * 44 + Math.sin(G.t/38 + i * .8) * 9;
+      const 휨 = Math.sin(G.t/52 + i) * 12 + i * 2.2;
+      x.beginPath();
+      x.moveTo(cx + ox - 4.4, cy - 14);
+      x.quadraticCurveTo(cx + ox + 휨*.5, cy + 길*.55, cx + ox + 휨, cy + 길);
+      x.lineTo(cx + ox + 휨 + 6.4, cy + 길);
+      x.quadraticCurveTo(cx + ox + 휨*.5 + 6.4, cy + 길*.55, cx + ox + 2, cy - 14);
+      x.fill();
+    }
+    x.beginPath(); x.ellipse(cx, cy - 12, 42, 32, 0, 0, 7); x.fill();  // 정수리
+
+    x.globalAlpha = 1; x.restore();
+
+    // 가슴을 누르는 무게
+    const r = 78 + 숨 * 6 + (1-힘) * 18;
+    const 무게 = x.createRadialGradient(320, 216, 8, 320, 216, r);
+    무게.addColorStop(0, `rgba(26,10,18,${0.5 + (1-힘)*0.3})`);
+    무게.addColorStop(1, "#1a0a1200");
+    x.fillStyle = 무게; x.beginPath(); x.arc(320, 216, r, 0, 7); x.fill();
+
+    // 이불 끝
+    x.fillStyle = "#0d0b14";
+    x.beginPath(); x.moveTo(0, h-18); x.quadraticCurveTo(320, h-34, 640, h-18);
+    x.lineTo(640, h); x.lineTo(0, h); x.fill();
+
+    // 몸부림 파동
+    G.파동 = G.파동.filter(p => performance.now() - p.t < 400);
+    for (const p of G.파동) {
+      const k = (performance.now() - p.t) / 400;
+      x.globalAlpha = (1 - k) * .5;
+      x.strokeStyle = "#e8c9a0"; x.lineWidth = 2;
+      x.beginPath(); x.arc(320, 176, 40 + k*110, 0, 7); x.stroke();
+      x.globalAlpha = 1;
+    }
+
+    // 사방에서 조여드는 어둠
+    const 조임 = x.createRadialGradient(320, 150, 90, 320, 150, 330 - 힘 * 60);
+    조임.addColorStop(0, "#00000000"); 조임.addColorStop(1, "#000000cc");
+    x.fillStyle = 조임; x.fillRect(0, 0, w, h);
+
+    // 게이지
+    const bw = 260, bx = (w - bw) / 2;
+    x.fillStyle = "#ffffff14"; x.fillRect(bx, h - 46, bw, 12);
+    x.fillStyle = 힘 > .75 ? "#e8756c" : "#a58fd0";
+    x.fillRect(bx, h - 46, bw * 힘, 12);
+    x.strokeStyle = "#ffffff33"; x.lineWidth = 1.5; x.strokeRect(bx, h - 46, bw, 12);
+    x.fillStyle = "#9a93ad"; x.font = "600 12px system-ui"; x.textAlign = "center";
+    x.fillText("몸부림", w/2, h - 54);
+
+    // 남은 시간
+    const 남 = Math.max(0, 가위설정.제한 - 경과);
+    x.fillStyle = "#6f6982"; x.font = "700 15px system-ui";
+    x.fillText((남/1000).toFixed(1), w/2, h - 16);
+
+    if (G.상태 === "진행") {
+      x.globalAlpha = .55 + Math.sin(G.t / 8) * .35;
+      x.fillStyle = "#e2c05a"; x.font = "700 15px system-ui";
+      x.fillText("연타", w/2, 58);
+      x.globalAlpha = 1;
+    }
+    x.textAlign = "start";
+  }
+
+  function 끝(버팀) {
+    G.상태 = "끝"; cancelAnimationFrame(raf); 입력(false); 미니화면(false);
+    $("shellhud").className = "shellhud";
+    setTimeout(() => 콜백(버팀), 600);
+  }
+
+  return { 시작, 개시 };
+})();
+
+/* ── 사격 (듀오 최종 미니게임) ──
+   제한 시간 안에 적을 제압한다. 머리는 한 방, 몸통은 두 방.
+   난이도는 탄창과 사격 간격으로 조절한다. */
+const 사격설정 = {
+  제한: 4300,   // 제한 시간 (ms)
+  적수: 4,      // 제압해야 하는 수
+  체력: 10,     // 적 체력
+  머리피해: 5,  // 머리 → 2방
+  몸통피해: 2,  // 몸통 → 5방
+  탄창: 26,     // 총 발수 — 헛방 여유가 줄었다
+  간격: 118,    // 연사 속도 (ms) — 누르고 있으면 자동으로 나간다
+  등장: 700,    // 적이 하나씩 나타나는 간격 (ms)
+  적크기: 0.40, // 지형은 그대로 두고 적만 줄인다 (판정 상자도 같이 줄어든다)
+  반동: 2.9,    // 한 발마다 쌓이는 반동 (최대 22)
+  회복: 0.15,   // 프레임당 반동 회복
+  튐: 14,       // 한 발에 화면이 위로 튀는 정도
+  좌우: 8,      // 좌우로 흔들리는 폭
+  복귀: 0.92,   // 화면이 제자리로 돌아오는 속도 (1에 가까울수록 오래 남는다)
+  최대흔들: 80  // 화면이 밀릴 수 있는 한계(px)
+};
+
+MINI.사격 = (() => {
+  const 땅 = 250;
+  let G, raf, 콜백, 이동, 누름;
+
+  function 시작(cb) {
+    콜백 = cb;
+    $("box").classList.add("hide");
+    $("choices").className = "choices";
+    $("bg").innerHTML = `<canvas id="cv" width="1280" height="640"></canvas>`;
+    미니화면(true);
+    G = { 상태:"대기", 적:[], 탄창:사격설정.탄창, 마지막:0, 시작시각:0,
+          조준:{x:320,y:170}, 효과:[], 처치:0, 반동:0, 흔들:{x:0,y:0}, 누르는중:false, 킬로그:[] };
+    배치();
+    입력(true);
+    안내();
+    그리기();
+  }
+
+  function 안내() {
+    $("shellhud").className = "shellhud on";
+    $("shellhud").innerHTML = `<b>${사격설정.제한/1000}초 · ${사격설정.적수}명</b>` +
+      `<small>머리 ${Math.ceil(사격설정.체력/사격설정.머리피해)}발 · ` +
+      `몸통 ${Math.ceil(사격설정.체력/사격설정.몸통피해)}발 · 탄창 ${사격설정.탄창}발<br>` +
+      `<span style="color:#8b849b">누르고 있으면 연사된다. 갈길수록 총구가 들린다.</span></small>`;
+    $("choices").className = "choices on";
+    $("choices").innerHTML = `<button onclick="MINI.사격.개시()">시작</button>`;
+  }
+
+  /* 깊이 0 = 멀리(작다·위쪽) · 1 = 가까이(크다·아래쪽) */
+  const 크기of = d => 0.5 + d * 0.68;
+  const 발yof  = d => 208 + d * 100;
+
+  function 배치() {
+    const 자리 = [];
+    for (let i = 0; i < 사격설정.적수; i++) {
+      const d = i / (사격설정.적수 - 1 || 1) * 0.85 + Math.random() * 0.15;
+      let x, 시도 = 0;
+      do { x = 60 + Math.random() * 500; 시도++; }
+      while (시도 < 40 && 자리.some(v => Math.abs(v - x) < 78));
+      자리.push(x);
+      G.적.push({ x, 깊이: d, 크기: 크기of(d) * 사격설정.적크기, 발y: 발yof(d),
+                  체력: 사격설정.체력, 죽음: false, 등장: i * 사격설정.등장 });
+    }
+    G.적.sort((a, b) => a.깊이 - b.깊이);          // 먼 것부터 그린다
+
+    // 지형지물도 같은 깊이 축에 올린다
+    G.지형 = [];
+    const 후보 = ["나무","바위","상자","드럼통","덤불"];
+    for (let i = 0; i < 16; i++) {
+      const d = Math.random();
+      G.지형.push({ 종류: 후보[Math.floor(Math.random()*후보.length)],
+                    x: Math.random() * 640, 깊이: d, 크기: 크기of(d), 발y: 발yof(d) });
+    }
+    G.지형.sort((a, b) => a.깊이 - b.깊이);
+  }
+
+  function 개시() {
+    if (event) event.stopPropagation();
+    $("shellhud").className = "shellhud";
+    $("choices").className = "choices";
+    G.상태 = "진행"; G.시작시각 = performance.now();
+    루프();
+  }
+
+  function 입력(on) {
+    const cv = () => $("cv");
+    if (on) {
+      이동 = e => { const r = cv().getBoundingClientRect();
+        G.조준.x = (e.clientX - r.left) / r.width * 640;
+        G.조준.y = (e.clientY - r.top) / r.height * 320; };
+      누름 = e => { e.stopPropagation(); 이동(e); G.누르는중 = true; 발사(); };
+      const 뗌 = () => { G.누르는중 = false; };
+      $("bg").onpointermove = 이동;
+      $("bg").onpointerdown = 누름;
+      $("bg").onpointerup = 뗌;
+      $("bg").onpointerleave = 뗌;
+      $("bg").style.cursor = "none";
+    } else {
+      $("bg").onpointermove = null; $("bg").onpointerdown = null;
+      $("bg").onpointerup = null; $("bg").onpointerleave = null;
+      $("bg").style.cursor = "";
+    }
+  }
+
+  function 발사() {
+    if (G.상태 !== "진행") return;
+    const t = performance.now();
+    if (t - G.마지막 < 사격설정.간격) return;      // 최소 발사 간격
+    if (G.탄창 <= 0) return;
+    G.마지막 = t; G.탄창--;
+
+    // 탄은 조준점에 그대로 박힌다. 화면이 흔들린 만큼을 되짚어 세계 좌표로 옮긴다.
+    const x = G.조준.x + G.흔들.x;
+    const y = G.조준.y + G.흔들.y;
+
+    // 쏘고 나서 화면이 튄다 — 다음 한 발은 그만큼 어긋난다
+    const 세기 = 0.6 + G.반동 * 0.085, 한 = 사격설정.최대흔들;
+    const 튐량 = 사격설정.튐 * 세기 * (0.8 + Math.random() * 0.4);   // 발마다 들쭉날쭉
+    G.흔들.y = Math.max(-한, G.흔들.y - 튐량);
+    G.흔들.x += (Math.random() - .5) * 2 * 사격설정.좌우 * 세기;
+    G.흔들.x = Math.max(-한, Math.min(한, G.흔들.x));
+    G.반동 = Math.min(22, G.반동 + 사격설정.반동);
+    G.효과.push({ x, y, t, 종류:"탄흔" });
+
+    // 가까운 적부터 판정한다
+    for (let i = G.적.length - 1; i >= 0; i--) {
+      const a = G.적[i];
+      if (a.죽음 || t - G.시작시각 < a.등장) continue;
+      const s = a.크기, hx = a.x, hy = a.발y - 72*s, hr = 13*s;
+
+      if ((x-hx)**2 + (y-hy)**2 <= hr*hr) {                       // 머리
+        a.체력 -= 사격설정.머리피해;
+        const 킬 = a.체력 <= 0;
+        G.효과.push({ x:hx, y:hy, t, 종류: 킬 ? "헤드" : "머리명중" });
+        if (킬) { a.죽음 = true; G.처치++; G.킬로그.push({t,머리:true}); }
+        return 판정();
+      }
+      if (x > a.x-19*s && x < a.x+19*s && y > a.발y-58*s && y < a.발y-4*s) {   // 몸통
+        a.체력 -= 사격설정.몸통피해;
+        const 킬 = a.체력 <= 0;
+        G.효과.push({ x, y, t, 종류: 킬 ? "처치" : "명중" });
+        if (킬) { a.죽음 = true; G.처치++; G.킬로그.push({t,머리:false}); }
+        return 판정();
+      }
+    }
+    판정();
+  }
+
+  function 판정() {
+    if (G.처치 >= 사격설정.적수) return 끝(true);
+    const 최소 = Math.ceil(사격설정.체력 / 사격설정.머리피해);      // 한 명당 최소 발수
+    if (G.탄창 < (사격설정.적수 - G.처치) * 최소) return 끝(false);
+  }
+
+  function 루프() {
+    if (G.상태 !== "진행") return;
+    const 경과 = performance.now() - G.시작시각;
+    if (경과 >= 사격설정.제한) return 끝(false);
+    G.반동 = Math.max(0, G.반동 - 사격설정.회복);        // 손을 떼면 가라앉는다
+    G.흔들.x *= 사격설정.복귀; G.흔들.y *= 사격설정.복귀;   // 총구가 제자리로 내려온다
+    if (G.누르는중) 발사();                              // 누르고 있으면 연사
+    그리기(경과);
+    raf = requestAnimationFrame(루프);
+  }
+
+  function 그리기(경과 = 0) {
+    const cv = $("cv"); if (!cv) return;
+    const x = cv.getContext("2d"), w = 640, h = 320;
+    x.setTransform(2, 0, 0, 2, 0, 0);
+
+    const M = 사격설정.최대흔들 + 20;    // 흔들려도 가장자리가 비지 않게 두는 여백
+    x.save(); x.translate(-G.흔들.x, -G.흔들.y);   // 여기서부터 세계가 흔들린다
+
+    // ── 배경 ── 지평선 위는 하늘, 아래는 원근이 있는 들판
+    const 지평 = 196;
+    const 하늘 = x.createLinearGradient(0, -M, 0, 지평);
+    하늘.addColorStop(0, "#8b97a6"); 하늘.addColorStop(1, "#c3c7c4");
+    x.fillStyle = 하늘; x.fillRect(-M, -M, w+M*2, 지평+M);
+
+    x.fillStyle = "#6a7668";                                    // 먼 능선
+    x.beginPath(); x.moveTo(-M, 182);
+    for (let i = 0; i <= 8; i++) x.lineTo(i*80, 172 + Math.sin(i*1.7)*11);
+    x.lineTo(w+M, 지평); x.lineTo(-M, 지평); x.fill();
+    x.fillStyle = "#4d5b45";                                    // 지평선 나무 줄
+    for (let i = -5; i < 38; i++) {
+      const tx = i*21 + (i%3)*5;
+      x.beginPath(); x.moveTo(tx, 지평); x.lineTo(tx+5, 180 - (i%4)*5); x.lineTo(tx+11, 지평); x.fill();
+    }
+    // 원경 건물 (작게)
+    x.fillStyle = "#9a9483"; x.fillRect(456, 160, 54, 36);
+    x.fillStyle = "#7d4438"; x.beginPath();
+    x.moveTo(450, 160); x.lineTo(483, 148); x.lineTo(516, 160); x.fill();
+
+    // 들판 — 멀수록 흐리고 밝다
+    const 들 = x.createLinearGradient(0, 지평, 0, h);
+    들.addColorStop(0, "#93986f"); 들.addColorStop(.45, "#7d8459"); 들.addColorStop(1, "#5f6743");
+    x.fillStyle = 들; x.fillRect(-M, 지평, w+M*2, h - 지평 + M);
+    for (let i = 0; i < 90; i++) {                              // 풀 — 멀수록 작다
+      const d = (i * 37 % 100) / 100, yy = 208 + d * 108;
+      x.fillStyle = "rgba(74,84,54," + (0.25 + d*0.35) + ")";
+      x.fillRect((i*71) % (w + M*2) - M, yy, 8 + d*16, 2 + d*3);
+    }
+
+    const t = performance.now();
+
+    // ── 지형지물 + 적을 깊이 순으로 함께 그린다 ──
+    const 목록 = [
+      ...(G.지형 || []).map(o => ({ ...o, 적:false })),
+      ...G.적.filter(a => G.시작시각 > 0 && t - G.시작시각 >= a.등장).map(a => ({ ...a, 적:true, 원본:a }))
+    ].sort((a, b) => a.깊이 - b.깊이);
+
+    for (const o of 목록) {
+      const s = o.크기, by = o.발y;
+      x.fillStyle = "rgba(0,0,0,0.28)";                          // 그림자
+      x.beginPath(); x.ellipse(o.x, by, 20*s, 5*s, 0, 0, 7); x.fill();
+
+      if (!o.적) {
+        if (o.종류 === "나무") {
+          x.fillStyle = "#4a3a2a"; x.fillRect(o.x-3*s, by-34*s, 6*s, 34*s);
+          x.fillStyle = "#41533c";
+          x.beginPath(); x.ellipse(o.x, by-46*s, 20*s, 17*s, 0, 0, 7); x.fill();
+        } else if (o.종류 === "바위") {
+          x.fillStyle = "#79776e";
+          x.beginPath(); x.moveTo(o.x-16*s, by); x.lineTo(o.x-9*s, by-14*s);
+          x.lineTo(o.x+5*s, by-17*s); x.lineTo(o.x+16*s, by); x.fill();
+        } else if (o.종류 === "상자") {
+          x.fillStyle = "#8a6f4a"; x.fillRect(o.x-14*s, by-20*s, 28*s, 20*s);
+          x.strokeStyle = "#5c4a31"; x.lineWidth = 2*s;
+          x.strokeRect(o.x-14*s, by-20*s, 28*s, 20*s);
+        } else if (o.종류 === "드럼통") {
+          x.fillStyle = "#8a4a3a"; x.fillRect(o.x-9*s, by-26*s, 18*s, 26*s);
+          x.fillStyle = "#a85b47"; x.fillRect(o.x-9*s, by-26*s, 18*s, 4*s);
+        } else {
+          x.fillStyle = "#4e5c3e";
+          x.beginPath(); x.ellipse(o.x, by-7*s, 17*s, 9*s, 0, 0, 7); x.fill();
+        }
+        continue;
+      }
+
+      // ── 적 ──
+      const a = o.원본, 비 = a.체력 / 사격설정.체력;
+      const 다친 = !a.죽음 && 비 < 1;
+      const 옷   = a.죽음 ? "#4a4a45" : 다친 ? "#7e4034" : "#3f4636";
+      const 장비 = a.죽음 ? "#3a3a36" : 다친 ? "#63312a" : "#2b3128";
+      x.globalAlpha = a.죽음 ? .35 : 1;
+
+      x.fillStyle = 장비;                                        // 백팩
+      x.fillRect(a.x + 12*s, a.발y - 50*s, 11*s, 28*s);
+      x.fillStyle = 옷; x.strokeStyle = "#161a14"; x.lineWidth = 2.4*s;
+      x.beginPath();                                             // 몸통
+      x.moveTo(a.x-17*s, a.발y-4*s); x.lineTo(a.x-19*s, a.발y-48*s);
+      x.quadraticCurveTo(a.x, a.발y-60*s, a.x+19*s, a.발y-48*s);
+      x.lineTo(a.x+17*s, a.발y-4*s); x.closePath(); x.fill(); x.stroke();
+      x.fillStyle = 장비; x.fillRect(a.x-13*s, a.발y-42*s, 26*s, 21*s);   // 조끼
+      x.fillStyle = "#20261c"; x.fillRect(a.x-22*s, a.발y-32*s, 40*s, 4*s); // 총
+      x.fillStyle = 옷;                                          // 머리
+      x.beginPath(); x.arc(a.x, a.발y-72*s, 12*s, 0, 7); x.fill(); x.stroke();
+      x.fillStyle = 장비;                                        // 헬멧
+      x.beginPath(); x.arc(a.x, a.발y-74*s, 13*s, Math.PI, 0); x.fill();
+      x.fillRect(a.x-14*s, a.발y-76*s, 28*s, 4*s);
+
+      if (다친) {                                                // 체력 바
+        const bw = 42*s;
+        x.fillStyle = "#00000088"; x.fillRect(a.x-bw/2, a.발y-94*s, bw, 5*s);
+        x.fillStyle = 비 > .5 ? "#e8c46a" : "#ff5a4a";
+        x.fillRect(a.x-bw/2, a.발y-94*s, bw*비, 5*s);
+      }
+      x.globalAlpha = 1;
+    }
+
+    // ── 히트 마커 ──
+    G.효과 = G.효과.filter(e => t - e.t < 420);
+    for (const e of G.효과) {
+      const k = 1 - (t - e.t) / 420;
+      x.globalAlpha = k;
+      const X = (색, r, 굵기) => {
+        x.strokeStyle = 색; x.lineWidth = 굵기; x.beginPath();
+        x.moveTo(e.x-r, e.y-r); x.lineTo(e.x+r, e.y+r);
+        x.moveTo(e.x+r, e.y-r); x.lineTo(e.x-r, e.y+r); x.stroke();
+      };
+      if (e.종류 === "헤드") X("#ff5a4a", 13*(1.5-k), 3.5);
+      else if (e.종류 === "처치") X("#ff5a4a", 11*(1.5-k), 3);
+      else if (e.종류 === "명중") X("#ffffff", 8, 2.5);
+      else { x.fillStyle = "#e8e3d6"; x.beginPath(); x.arc(e.x, e.y, 2.5, 0, 7); x.fill(); }
+      x.globalAlpha = 1;
+    }
+
+    x.restore();                                  // 여기부터는 화면에 고정된 층
+
+    // 자기장 — 오른쪽 끝의 푸른 벽
+    const 자기장 = x.createLinearGradient(w-70, 0, w, 0);
+    자기장.addColorStop(0, "#4aa8ff00"); 자기장.addColorStop(1, "#4aa8ff4d");
+    x.fillStyle = 자기장; x.fillRect(w-70, 0, 70, h);
+
+    // ── 조준점 — 탄은 정확히 여기에 박힌다. 벌어지지 않는다 ──
+    const c = G.조준, 벌 = 7;
+    x.strokeStyle = "#f2f4f7"; x.lineWidth = 1.4;
+    x.beginPath();
+    x.moveTo(c.x-벌-10, c.y); x.lineTo(c.x-벌, c.y); x.moveTo(c.x+벌, c.y); x.lineTo(c.x+벌+10, c.y);
+    x.moveTo(c.x, c.y-벌-10); x.lineTo(c.x, c.y-벌); x.moveTo(c.x, c.y+벌); x.lineTo(c.x, c.y+벌+10);
+    x.stroke();
+    x.fillStyle = "#ff4a3a"; x.beginPath(); x.arc(c.x, c.y, 1.8, 0, 7); x.fill();
+
+    // ── HUD ──
+    const 남 = Math.max(0, 사격설정.제한 - 경과);
+    x.fillStyle = "#0e1116cc"; x.fillRect(w/2 - 62, 10, 124, 26);
+    x.fillStyle = 남 < 1500 ? "#ff5a4a" : "#e8ecf2";
+    x.font = "700 17px system-ui"; x.textAlign = "center";
+    x.fillText((남/1000).toFixed(1), w/2 - 12, 29);
+    x.fillStyle = "#8d97a5"; x.font = "600 12px system-ui";
+    x.fillText("초 남음", w/2 + 26, 29);
+    x.fillStyle = "#00000055"; x.fillRect(w/2 - 62, 36, 124, 3);
+    x.fillStyle = 남 < 1500 ? "#ff5a4a" : "#4aa8ff";
+    x.fillRect(w/2 - 62, 36, 124 * (남/사격설정.제한), 3);
+
+    x.textAlign = "right";                                   // 탄약 (우하단)
+    x.fillStyle = "#f2f4f7"; x.font = "800 30px system-ui";
+    x.fillText(String(G.탄창), w - 62, h - 20);
+    x.fillStyle = "#8d97a5"; x.font = "700 16px system-ui";
+    x.fillText("/ " + 사격설정.탄창, w - 20, h - 20);
+    x.fillStyle = "#8d97a5"; x.font = "600 11px system-ui";
+    x.fillText("5.56mm", w - 20, h - 42);
+
+    x.textAlign = "left";                                    // 남은 적 (좌하단)
+    x.fillStyle = "#0e1116aa"; x.fillRect(16, h - 44, 104, 28);
+    x.fillStyle = "#e8ecf2"; x.font = "700 14px system-ui";
+    x.fillText(`남은 적  ${사격설정.적수 - G.처치}`, 26, h - 25);
+
+    // 킬 로그 (우상단)
+    x.textAlign = "right"; x.font = "600 12px system-ui";
+    G.킬로그 = (G.킬로그 || []).filter(k => t - k.t < 2600);
+    G.킬로그.forEach((k, i) => {
+      x.globalAlpha = 1 - (t - k.t) / 2600 * .6;
+      x.fillStyle = "#0e1116bb"; x.fillRect(w - 218, 12 + i*24, 202, 20);
+      x.fillStyle = "#e8ecf2";
+      x.fillText(`면제  ▸  ${k.머리 ? "HEADSHOT" : "처치"}`, w - 26, 26 + i*24);
+      x.globalAlpha = 1;
+    });
+    x.textAlign = "start";
+  }
+
+  function 끝(성공) {
+    G.상태 = "끝"; cancelAnimationFrame(raf); 입력(false); 미니화면(false);
+    $("shellhud").className = "shellhud";
+    setTimeout(() => 콜백(성공, G.처치), 500);
+  }
+
+  return { 시작, 개시 };
+})();
+
+/* 자전거 왕복 — 관장님이 먼 지점에 시킨 커피.
+   갈 때는 빈손, 올 때는 커피를 들고 온다. 부딪히면 쏟는다. */
+MINI.자전거 = (() => {
+  const 땅 = 258, 총거리 = 1900;                 // 한 구간 약 10초
+  const 갈때x = 90, 올때x = 550;                 // 돌아올 때는 반대편에 선다
+  let G, raf, 키, 콜백;
+
+  /* 길은 한 번만 깔린다. 왕복 모두 이 배열을 쓴다. */
+  function 길깔기() {
+    const c = [];
+    for (let d = 360; d < 총거리 - 260; d += 300 + Math.random() * 90) {
+      const r = Math.random();
+      c.push(r < .38 ? { d, 종류:"웅덩이", w:64, h:14, y:0 }
+           : r < .72 ? { d, 종류:"턱",     w:34, h:42, y:0 }
+                     : { d, 종류:"간판",   w:44, h:32, y:-40 });
+    }
+    return c;
+  }
+
+  const 끝점 = [
+    { d:총거리, 이름:"메가커피", 색:"#ffd45e", 글:"#3a2a06", 컵:true },
+    { d:0,      이름:"복싱장",   색:"#8fa5c8", 글:"#0d1420", 컵:false }
+  ];
+
+  const 나x   = () => G.구간 === 1 ? 갈때x : 올때x;
+  const 위치  = () => G.구간 === 1 ? G.거리 : 총거리 - G.거리;   // 길 위의 절대 좌표
+  const 화면x = o => 나x() + (o.d - 위치());                      // 앞에 있는 것은 진행 방향 쪽에 보인다
+
+  function 시작(cb) {
+    콜백 = cb;
+    $("box").classList.add("hide");
+    $("choices").className = "choices";
+    $("bg").innerHTML = `<canvas id="cv" width="1280" height="640"></canvas>`;
+    미니화면(true);
+    G = { 구간:1, 거리:0, y:0, vy:0, 숙임:false, 길:길깔기(), 커피:100,
+          t:0, 무적:0, 흔들:0, 속도:2.4, 상태:"안내" };
+    입력연결();
+    안내("자전거", "↑ 또는 화면 위쪽 = 뛰어넘기<br>↓ 또는 화면 아래쪽 = 숙이기", "출발");
+  }
+
+  function 안내(제목, 설명, 버튼) {
+    $("shellhud").className = "shellhud on";
+    $("shellhud").innerHTML = `<b>${제목}</b><small>${설명}</small>`;
+    $("choices").className = "choices on";
+    $("choices").innerHTML = `<button onclick="MINI.자전거.진행()">${버튼}</button>`;
+  }
+
+  function 진행() {
+    event && event.stopPropagation();
+    $("shellhud").className = "shellhud";
+    $("choices").className = "choices";
+    if (G.상태 === "안내") { G.상태 = "주행"; 루프(); }
+    else 끝();
+  }
+
+  function 뛰기() { if (G.상태 === "주행" && G.y === 0 && !G.숙임) G.vy = -7.0; }
+  function 숙이기(on) { if (G.상태 === "주행") G.숙임 = on && G.y === 0; }
+
+  function 입력연결() {
+    키 = e => {
+      if (e.key === "ArrowUp" || e.key === " " || e.key === "w") { e.preventDefault(); 뛰기(); }
+      if (e.key === "ArrowDown" || e.key === "s") { e.preventDefault(); 숙이기(true); }
+    };
+    const 뗌 = e => { if (e.key === "ArrowDown" || e.key === "s") 숙이기(false); };
+    addEventListener("keydown", 키); addEventListener("keyup", 뗌);
+    키._뗌 = 뗌;
+    $("bg").onpointerdown = e => {
+      const r = $("bg").getBoundingClientRect();
+      if (e.clientY - r.top < r.height * 0.6) 뛰기(); else 숙이기(true);
+    };
+    $("bg").onpointerup = () => 숙이기(false);
+  }
+  function 입력해제() {
+    removeEventListener("keydown", 키); removeEventListener("keyup", 키._뗌);
+    $("bg").onpointerdown = null; $("bg").onpointerup = null;
+  }
+
+  function 루프() {
+    const cv = $("cv"); if (!cv || G.상태 !== "주행") return;
+    const x = cv.getContext("2d");
+    G.t++;
+    G.속도 = 2.4 + (G.거리 / 총거리) * 1.2;          // 갈수록 조금씩 빨라진다
+    G.거리 += G.속도;
+    G.vy += 0.25; G.y = Math.min(0, G.y + G.vy);
+    if (G.y === 0) G.vy = 0;
+    if (G.무적 > 0) G.무적--;
+    if (G.흔들 > 0) G.흔들--;
+
+    const 내높이 = G.숙임 ? 30 : 46;
+    const 내위 = 땅 + G.y - 내높이, 내아래 = 땅 + G.y;
+    const 왼 = 나x() - 21, 오 = 나x() + 21;
+    for (const o of G.길) {
+      const sx = 화면x(o);
+      const 오위 = 땅 + o.y - o.h, 오아래 = 땅 + o.y;
+      if (G.무적 === 0 && sx < 오 && sx + o.w > 왼 && 내위 < 오아래 && 내아래 > 오위) {
+        G.무적 = 55; G.흔들 = 16;
+        if (G.구간 === 2) G.커피 = Math.max(0, G.커피 - 26);
+      }
+    }
+
+    그리기(x);
+
+    if (G.거리 >= 총거리) {
+      if (G.구간 === 1) {
+        // 클릭 없이 그 자리에서 돌아선다. 길은 그대로다.
+        G.상태 = "회차"; 그리기(x);
+        setTimeout(() => {
+          if (!$("cv")) return;
+          G.구간 = 2; G.거리 = 0; G.속도 = 2.4; G.y = 0; G.vy = 0;
+          G.숙임 = false; G.무적 = 40; G.상태 = "주행"; 루프();
+        }, 1800);
+      } else { G.상태 = "끝"; 결과(); }
+      return;
+    }
+    raf = requestAnimationFrame(루프);
+  }
+
+  function 그리기(x) {
+    const w = 640, h = 320, 흔 = G.흔들 > 0 ? (Math.random() - .5) * 7 : 0;
+    const 절 = 위치();
+    x.setTransform(2, 0, 0, 2, 0, 0);
+    x.save(); x.translate(흔, 0);
+
+    // 배경은 최대한 죽인다. 장애물이 보여야 한다.
+    x.fillStyle = "#0d0f16"; x.fillRect(0, 0, w, h);
+    x.fillStyle = "#080a10";
+    for (let i = 0; i < 8; i++) {
+      const bx = (i * 110 - (절 * .22) % 110);
+      x.fillRect(bx, 110 + (i % 3) * 20, 70, 150);
+    }
+    x.fillStyle = "#e8c46a14";
+    for (let i = 0; i < 8; i++) x.fillRect((i * 110 - (절 * .22) % 110) + 16, 132 + (i % 3) * 20, 10, 12);
+
+    x.fillStyle = "#1b2029"; x.fillRect(0, 땅, w, h - 땅);      // 노면을 밝게
+    x.strokeStyle = "#525c6e"; x.lineWidth = 2;
+    x.beginPath(); x.moveTo(0, 땅); x.lineTo(w, 땅); x.stroke();
+    x.strokeStyle = "#2e3542"; x.setLineDash([22, 26]);
+    x.lineDashOffset = -절;
+    x.beginPath(); x.moveTo(0, 땅 + 24); x.lineTo(w, 땅 + 24); x.stroke();
+    x.setLineDash([]);
+
+    // ── 길 끝의 가게 ──
+    for (const L of 끝점) {
+      const bx = 나x() + (L.d - 절);
+      if (bx < -220 || bx > w + 220) continue;
+      const bw = 176, bh = 146, by = 땅 - bh;
+
+      x.fillStyle = "#171c26"; x.fillRect(bx - bw/2, by, bw, bh);        // 건물
+      x.fillStyle = "#0c1017"; x.fillRect(bx - bw/2, by, bw, 7);
+
+      x.fillStyle = "#232936";                                            // 유리창
+      x.fillRect(bx - bw/2 + 13, by + 58, bw - 26, 88);
+      const 속 = x.createLinearGradient(0, by + 58, 0, 땅);
+      속.addColorStop(0, L.색 + "4d"); 속.addColorStop(1, L.색 + "0d");
+      x.fillStyle = 속; x.fillRect(bx - bw/2 + 13, by + 58, bw - 26, 88);
+      x.strokeStyle = "#39414f"; x.lineWidth = 2;
+      x.beginPath(); x.moveTo(bx, by + 58); x.lineTo(bx, 땅); x.stroke();
+
+      x.fillStyle = L.색;                                                 // 간판
+      x.fillRect(bx - bw/2 + 5, by + 13, bw - 10, 34);
+      x.fillStyle = L.글; x.textAlign = "center";
+      x.font = "800 21px system-ui";
+      x.fillText(L.이름, bx + (L.컵 ? 11 : 0), by + 37);
+      if (L.컵) {                                                         // 컵 표시
+        const cx = bx - 44, cy = by + 30;
+        x.beginPath(); x.moveTo(cx - 7, cy - 8); x.lineTo(cx + 7, cy - 8);
+        x.lineTo(cx + 5, cy + 8); x.lineTo(cx - 5, cy + 8); x.closePath(); x.fill();
+        x.fillRect(cx - 9, cy - 12, 18, 4);
+      }
+      x.textAlign = "start";
+
+      const 새는빛 = x.createLinearGradient(0, 땅, 0, 땅 + 46);           // 바닥에 새는 불빛
+      새는빛.addColorStop(0, L.색 + "26"); 새는빛.addColorStop(1, L.색 + "00");
+      x.fillStyle = 새는빛; x.fillRect(bx - bw/2, 땅, bw, 46);
+    }
+
+    for (const o of G.길) {
+      const ox = 화면x(o);
+      if (ox < -110 || ox > w + 110) continue;
+      if (o.종류 === "웅덩이") {                    // 파란 물웅덩이
+        x.fillStyle = "#4f7ba8";
+        x.beginPath(); x.ellipse(ox + o.w/2, 땅 + 5, o.w/2, 8, 0, 0, 7); x.fill();
+        x.strokeStyle = "#8fc4e8"; x.lineWidth = 2.5;
+        x.beginPath(); x.ellipse(ox + o.w/2, 땅 + 5, o.w/2, 8, 0, 0, 7); x.stroke();
+        x.fillStyle = "#bfe0f5"; x.beginPath();
+        x.ellipse(ox + o.w/2 - 10, 땅 + 2, 8, 2.5, 0, 0, 7); x.fill();
+      } else if (o.종류 === "턱") {                  // 밝은 회색 턱
+        x.fillStyle = "#8c93a6"; x.fillRect(ox, 땅 - o.h, o.w, o.h);
+        x.fillStyle = "#d6dcea"; x.fillRect(ox, 땅 - o.h, o.w, 6);
+        x.strokeStyle = "#050609"; x.lineWidth = 2;
+        x.strokeRect(ox, 땅 - o.h, o.w, o.h);
+      } else {                                       // 매달린 간판
+        const oy = 땅 + o.y - o.h;
+        x.strokeStyle = "#6b727f"; x.lineWidth = 3;
+        x.beginPath(); x.moveTo(ox + o.w/2, 0); x.lineTo(ox + o.w/2, oy); x.stroke();
+        x.fillStyle = "#d4894a"; x.fillRect(ox, oy, o.w, o.h);
+        x.strokeStyle = "#f5c08a"; x.lineWidth = 2.5; x.strokeRect(ox, oy, o.w, o.h);
+        x.fillStyle = "#3a2413"; x.fillRect(ox + 7, oy + 11, o.w - 14, 4);
+      }
+    }
+
+    // ── 자전거 탄 면제 ── 어두운 길에서 확실히 보여야 한다
+    // 갈 때는 왼쪽에서 오른쪽을, 올 때는 오른쪽에서 왼쪽을 본다
+    x.save(); x.translate(나x(), 0);
+    if (G.구간 === 2) x.scale(-1, 1);
+    x.translate(-갈때x, 0);
+    const py = 땅 + G.y, 뜸 = -G.y;
+    const 굴림 = G.거리 * 0.085;
+
+    // 그림자 — 뜰수록 작고 옅어진다. 위아래 움직임이 이것으로 읽힌다
+    const sc = Math.max(.28, 1 - 뜸 / 88);
+    x.globalAlpha = .55 * sc; x.fillStyle = "#000";
+    x.beginPath(); x.ellipse(90, 땅 + 4, 30 * sc, 5 * sc, 0, 0, 7); x.fill();
+    x.globalAlpha = 1;
+
+    x.globalAlpha = G.무적 > 0 && G.t % 8 < 4 ? .35 : 1;
+
+    // 바퀴 — 살이 돌아가서 속도가 보인다
+    for (const wx of [74, 106]) {
+      x.strokeStyle = "#cfd8e8"; x.lineWidth = 2.5;
+      x.beginPath(); x.arc(wx, py - 9, 9, 0, 7); x.stroke();
+      x.save(); x.translate(wx, py - 9); x.rotate(굴림);
+      x.strokeStyle = "#79839a"; x.lineWidth = 1.4;
+      for (let i = 0; i < 4; i++) {
+        const a = i * Math.PI / 4, cx = Math.cos(a) * 8, cy = Math.sin(a) * 8;
+        x.beginPath(); x.moveTo(-cx, -cy); x.lineTo(cx, cy); x.stroke();
+      }
+      x.restore();
+    }
+
+    // 프레임
+    x.strokeStyle = "#e8edf6"; x.lineWidth = 3; x.lineCap = "round";
+    x.beginPath(); x.moveTo(74, py - 9); x.lineTo(92, py - 20); x.lineTo(106, py - 9);
+    x.moveTo(92, py - 20); x.lineTo(100, py - 30); x.stroke();
+    x.lineCap = "butt";
+
+    // 사람
+    x.fillStyle = "#f2ead6";
+    if (G.숙임) {
+      x.beginPath(); x.ellipse(90, py - 22, 15, 7, -.15, 0, 7); x.fill();
+      x.beginPath(); x.arc(104, py - 24, 6, 0, 7); x.fill();
+    } else {
+      x.beginPath(); x.ellipse(90, py - 34, 8, 13, -.2, 0, 7); x.fill();
+      x.beginPath(); x.arc(88, py - 50, 8, 0, 7); x.fill();
+      if (G.구간 === 2) { x.fillStyle = "#e8b877"; x.fillRect(97, py - 44, 9, 12); }
+    }
+    x.globalAlpha = 1;
+    x.restore();
+
+    // HUD
+    const 비 = G.거리 / 총거리;
+    x.fillStyle = "#00000066"; x.fillRect(0, h - 8, w, 8);
+    x.fillStyle = "#7f6ddb";
+    if (G.구간 === 1) x.fillRect(0, h - 8, w * 비, 8);
+    else x.fillRect(w - w * 비, h - 8, w * 비, 8);   // 돌아오는 길은 오른쪽에서 줄어든다
+    x.fillStyle = "#ffffffcc"; x.font = "600 14px system-ui";
+    x.fillText(G.구간 === 1 ? "가는 길" : "돌아오는 길", 14, 26);
+    if (G.구간 === 2) {
+      x.fillStyle = "#00000066"; x.fillRect(w - 130, 14, 116, 12);
+      x.fillStyle = G.커피 > 60 ? "#c9a06a" : G.커피 > 25 ? "#c98a5a" : "#c95a4a";
+      x.fillRect(w - 130, 14, 116 * (G.커피 / 100), 12);
+      x.fillStyle = "#ffffffcc"; x.fillText("커피 " + G.커피 + "%", w - 130, 40);
+    }
+
+    if (G.상태 === "회차") {                      // 커피를 받고 돌아선다
+      x.fillStyle = "#000000b0"; x.fillRect(0, 108, w, 92);
+      x.textAlign = "center";
+      x.fillStyle = "#e8c46a"; x.font = "800 26px system-ui";
+      x.fillText("메가커피", w/2, 142);
+      x.fillStyle = "#e8ecf2"; x.font = "600 15px system-ui";
+      x.fillText("커피를 받았다. 왔던 길을 그대로 돌아간다.", w/2, 168);
+      x.fillStyle = "#e2607a"; x.font = "700 14px system-ui";
+      x.fillText("부딪히면 쏟는다", w/2, 190);
+      x.textAlign = "start";
+    }
+    x.restore();
+  }
+
+  function 결과() {
+    const c = G.커피;
+    안내("복싱장 도착",
+      c >= 90 ? "커피는 거의 온전하다." : c >= 40 ? "절반쯤 남았다." : "컵만 남았다.",
+      "계속");
+  }
+
+  function 끝() {
+    cancelAnimationFrame(raf); 입력해제(); 미니화면(false);
+    $("shellhud").className = "shellhud";
+    const c = G.커피;
+    const 효과 = c >= 90 ? { 돈:-7000, 정신:9, 체력:-24 }
+              : c >= 40 ? { 돈:-7000, 정신:-5, 체력:-24 }
+                        : { 돈:-14000, 정신:-14, 체력:-24 };
+    자원(효과); 자원팝업(효과);
+    대기 = 콜백;
+    씬재생({ bg:"street", 인물:null, 대상:null, 지문:
+      c >= 90 ? [["say","관장님: \"오, 빨리 왔네. 고맙다.\""],
+                 ["narr","관장님은 컵을 받아 한 모금 마시고 다시 휴대폰을 봤다."],
+                 ["think","이것으로 시험은 끝난 것인가. 아니면 이것도 함정인가."]]
+      : c >= 40 ? [["narr","컵의 절반쯤이 내 옷과 바구니에 있었다."],
+                   ["say","관장님: \"…이거 왜 이래?\""],
+                   ["say","면제: \"길이 젖어 있었습니다.\""],
+                   ["think","그는 모른다. 내가 무엇을 통과해 왔는지."]]
+      : [["narr","컵은 비어 있었다. 정확히는, 컵만 남아 있었다."],
+         ["say","관장님: \"…….\""],
+         ["narr","다시 사 왔다. 이번에는 내 돈으로."],
+         ["think","아무도 믿지 않는다는 것. 그것이 이 시련의 본체다."]] });
+  }
+
+  return { 시작, 진행 };
+})();
+
+/* 베손 찾기 — 야바위. 세 곳 중 하나에 웅크리고 있다.
+   속임수는 없다. 순전히 눈으로 따라가는 것이다. 다만 세 판을 연속으로 맞춰야 한다. */
+MINI.베손찾기 = (() => {
+  const 자리 = ["4%", "35.5%", "67%"];
+  const 판설정 = [
+    { 섞기: 9,  속도: 300 },
+    { 섞기: 13, 속도: 225 },
+    { 섞기: 18, 속도: 170 }
+  ];
+  let 판, 위치, 정답, 콜백, 쓴체력;
+
+  /* 웅크린 것은 상자 '위'로 드러난다. 뚜껑이 열리면서 함께 보인다. */
+  const 상자 = `<svg viewBox="0 0 120 150" preserveAspectRatio="xMidYMax meet">
+    <g class="머리" fill="#0a0813">
+      <path d="M60 26c16 0 25 10 25 21 0 8-6 12-25 12s-25-4-25-12c0-11 9-21 25-21z"/>
+      <circle cx="60" cy="22" r="10"/></g>
+    <path class="뚜껑" d="M16 66l16-15h56l16 15z" fill="#221d33" stroke="#3a3352" stroke-width="3"/>
+    <g fill="#161320" stroke="#2c2740" stroke-width="3"><path d="M18 66h84v78H18z"/></g>
+    <g stroke="#0c0a14" stroke-width="2" opacity=".75"><line x1="18" y1="104" x2="102" y2="104"/></g>
+  </svg>`;
+
+  function 시작(cb) {
+    콜백 = cb; 판 = 0; 쓴체력 = 0;
+    미니화면(true);
+    $("shell").className = "shell on";
+    $("shellhud").className = "shellhud on";
+    $("box").classList.add("hide");
+    $("choices").className = "choices";
+    위치 = [0, 1, 2];
+    $("shell").innerHTML = 위치.map((_, i) =>
+      `<div class="spot" data-i="${i}" style="left:${자리[i]}">${상자}</div>`).join("");
+    새판();
+  }
+
+  const 칸 = () => [...$("shell").querySelectorAll(".spot")];
+  const 잠금 = on => $("shell").classList.toggle("잠금", on);
+  const 안내 = (t, s) => $("shellhud").innerHTML = `<b>${t}</b><small>${s}</small>`;
+
+  function 새판() {
+    const cfg = 판설정[판];
+    정답 = Math.floor(Math.random() * 3);
+    잠금(true);
+    칸().forEach(el => el.classList.remove("열림"));
+    안내(`${판 + 1} / 3`, "잘 봐라");
+
+    // ① 잠깐 뜸을 들이고 ② 확실히 보여주고 ③ 닫고 ④ 섞는다
+    setTimeout(() => {
+      칸().forEach((el, i) => el.classList.toggle("열림", i === 정답));
+      안내(`${판 + 1} / 3`, "여기 있다");
+    }, 500);
+
+    setTimeout(() => {
+      칸().forEach(el => el.classList.remove("열림"));
+      안내(`${판 + 1} / 3`, "섞는다");
+    }, 2200);
+
+    setTimeout(() => 섞기(cfg, 0), 2750);
+  }
+
+  function 섞기(cfg, k) {
+    if (k >= cfg.섞기) {
+      잠금(false);
+      안내(`${판 + 1} / 3`, "어디에 있나");
+      return;
+    }
+    const a = Math.floor(Math.random() * 3);
+    let b = Math.floor(Math.random() * 3);
+    while (b === a) b = Math.floor(Math.random() * 3);
+    const el = 칸();
+    const t = el[a].style.left; el[a].style.left = el[b].style.left; el[b].style.left = t;
+    const ia = Number(el[a].dataset.i), ib = Number(el[b].dataset.i);
+    el[a].dataset.i = ib; el[b].dataset.i = ia;
+    if (정답 === ia) 정답 = ib; else if (정답 === ib) 정답 = ia;
+    setTimeout(() => 섞기(cfg, k + 1), cfg.속도);
+  }
+
+  function 고름(el) {
+    잠금(true);
+    자원({ 체력: -7 }); 쓴체력 += 7;
+    const 맞음 = Number(el.dataset.i) === 정답;
+    칸().forEach(x => x.classList.toggle("열림", Number(x.dataset.i) === 정답));
+    안내(`${판 + 1} / 3`, 맞음 ? "있다" : "없다");
+    setTimeout(() => {
+      if (!맞음) return 끝(false);
+      판++;
+      if (판 >= 3) return 끝(true);
+      새판();
+    }, 1100);
+  }
+
+  function 끝(성공) {
+    $("shell").className = "shell";
+    $("shellhud").className = "shellhud";
+    미니화면(false);
+    대기 = 콜백;
+    if (성공) {
+      S.베손찾음 = true;
+      자원({ 정신: 26 });
+      씬재생({ bg:"alley", 인물:null, 대상:null, 지문:[
+        ["narr","상자 뒤에 그 애가 있었다. 웅크린 채로."],
+        ["narr","고개를 들더니 나를 봤다. 도망가지 않았다."],
+        ["say","\"…몰라요.\""],
+        ["narr","그리고 다시 얼굴을 묻었다."],
+        ["think","찾았다. 아무도 못 찾은 것을 내가 찾았다."],
+        ["sys","베손을 찾았다. 정신력이 크게 돌아왔다. (+26)"]]});
+    } else {
+      자원({ 정신: -9 });
+      씬재생({ bg:"alley", 인물:null, 대상:null, 지문:[
+        ["narr","상자를 치웠다. 아무것도 없었다."],
+        ["narr","분명 거기서 소리가 났는데."],
+        ["think","내가 못 본 게 아니다. 옮겨진 것이다."],
+        ["think","…옮겨졌다고 말하면, 아무도 안 믿겠지."],
+        ["sys",`허탕이었다. 체력 −${쓴체력} · 정신 −9`]]});
+    }
+  }
+
+  return { 시작, 고름 };
+})();
+
+document.addEventListener("click", e => {
+  if ($("title") && $("title").classList.contains("on")) return;
+  const el = e.target.closest && e.target.closest("#shell .spot");
+  if (el && !$("shell").classList.contains("잠금")) MINI.베손찾기.고름(el);
+});
+
+function 이벤트단계() {
+  대기 = null;
+  if (S.slot >= 슬롯.length) return 하루정산();
+
+  let 후보 = 이벤트들.filter(e =>
+    !(e.한번만 && S.소모.includes(e.id)) && (!e.조건 || e.조건(S)));
+
+  if (강제이벤트) {                                           // 강제 지정이 있으면 확률·상한 무시
+    const f = 이벤트들.find(x => x.id === 강제이벤트);
+    강제이벤트 = null;
+    if (f) 후보 = [f]; else console.warn("그런 이벤트 없음:", 강제이벤트);
+  } else {
+    if (S.오늘이벤트 >= 설정.하루이벤트) return 진행();        // 하루 상한
+    if (Math.random() > 설정.이벤트확률 * (0.78 + S.day*0.035)) return 진행();
+  }
+  S.오늘이벤트++;
+
+  if (!후보.length) return 진행();
+  const e = 뽑기(후보);
+  if (e.한번만) S.소모.push(e.id);
+
+  $("aff").classList.remove("on");
+  대기 = () => {
+    자원(e.효과);                                  // 호감도는 건드리지 않는다
+    자원팝업(e.효과);
+    if (e.획득 && !S.스킬.includes(e.획득)) S.스킬.push(e.획득);
+    if (e.미니게임) return MINI[e.미니게임].시작(()=> setTimeout(진행, 400));
+    setTimeout(진행, Object.keys(e.효과).length ? 1400 : 300);
+  };
+  씬재생({ ...e, bg: e.bg, 인물: null, 대상: null });
+}
+
+/* 붕괴 */
+function 붕괴처리(종류) {
+  S.붕괴 = 종류;
+  const 정신 = S.정신;
+  let 지문;
+  if (정신 < 35) {
+    지문 = [["think","누가 손을 댄 것이다. 그녀가 스스로 그럴 리는 없으니까."],["think","시험이다. 나는 흔들리지 않는다."],["sys","호감도는 무너지지 않았다."]];
+    자원({정신:6});
+  } else if (정신 < 65) {
+    지문 = [["narr","뭔가 잘못됐다는 것은 알겠는데, 그것을 말로 만들 수가 없었다."],["sys","호감도가 흔들렸다."]];
+    S.호감.듀오 = Math.floor(S.호감.듀오 * .45); 자원({정신:-16});
+  } else {
+    지문 = [["narr","나는 그냥 알아버렸다."],["narr","아무 일도 없었다는 것을."],["narr","초대는 초대가 아니었고, 부활은 부활이었을 뿐이고, ㅋㅋ는 ㅋㅋ였다."],["sys","호감도가 0이 되었다."]];
+    S.호감.듀오 = 0; S.확정.듀오 = false; 자원({정신:-30});
+  }
+  S.듀오상태 = 종류;                      // 이후의 밤이 통째로 달라진다
+  const 꼬리 = {
+    계속: [["narr","초대 버튼을 눌렀다."],
+           ["narr","수락은 오지 않았다. 오늘은."],
+           ["sys","앞으로도 그녀에게 초대를 보낸다."]],
+    포기: [["narr","초대 버튼 위에서 커서가 한참 머물렀다."],
+           ["narr","나는 관전 버튼을 눌렀다."],
+           ["think","보는 것은 하는 것이 아니니까. 이건 매달리는 게 아니다."],
+           ["sys","앞으로 밤에는 관전만 한다. 몸은 쉬고, 다른 것이 깎인다."]]
+  }[종류];
+  $("aff").classList.add("on");
+  대기 = 이벤트단계;
+  씬재생({ 지문: 지문.concat(꼬리), bg:"game", 인물:null, 대상:"듀오" });
+}
+
+/* 하루 정산 */
+function 하루정산() {
+  S.slot = 0;
+
+  // 체력은 선택지 잠금과 감쇠 가중으로 이미 대가를 치른다. 별도 벌은 없다.
+  if (S.정신 <= 0) return 중얼거림();
+
+  다음날();
+}
+
+/* 정신 0 — 그 자리에서 무너진다. 말이 부서지고 하루가 사라진다 */
+function 중얼거림() {
+  // 가장 확신이 깊은 상대의 문장이 조각나서 새어나온다
+  const 최고 = Object.keys(S.호감).reduce((a,b)=> S.호감[a] >= S.호감[b] ? a : b);
+  const [가,나,다] = {
+    엘리베이터: ["같은 층이었어", "층이 같았다고", "우연이 아니야"],
+    횟집:       ["나한테만 말했어", "거기 두지 말라고", "나한테만"],
+    소개팅:     ["두 잔이었어", "두 잔을 시켜놨다고", "두 잔이면 그건"],
+    듀오:       ["듀오였어", "스쿼드가 아니라", "듀오였다고"],
+    귀신:       ["닿으려는 거야", "해치려는 게 아니고", "닿으려는 거지"]
+  }[최고];
+
+  const n = (S.중얼횟수 || 0) + 1;
+  S.중얼횟수 = n;
+  S.정신 = Math.max(8, 32 - n * 8);       // 반복될수록 덜 돌아온다
+  S.하루날림 = n >= 2 ? 2 : 1;            // 두 번째부터는 이틀
+  S.slot = 0;                             // 남은 시간대는 없다
+  HUD(); 오염표시();
+
+  const 괴성 = "으아" + "아".repeat(3 + n * 2) + "—";
+  const 토막 = s => s.replace(/\s/g, "").slice(0, Math.max(2, 5 - n));
+
+  const 지문 = [
+    ["narr","말이 먼저 나갔다. 생각보다 먼저."],
+    ["say",`"${가}. ${나}. ${가}."`],
+    ["narr","창밖이 밝았다."],
+    ["say",`"${가} ${가} ${다}"`],
+    ["say","\"순서가 있는 거야 순서가 순서가 순서\""],
+    ["narr","창밖이 붉었다."],
+    ["say",`"${괴성}"`],
+    ["narr","어디서 들은 소리인지 기억나지 않는다."],
+    ["say",`"${토막(가)} ${토막(가)} ${토막(가)} ${가}"`],
+    ["narr","창밖이 어두웠다."],
+    ["say",`"${나} ${나}"`]
+  ];
+  if (n >= 2) 지문.splice(7, 0,
+    ["say",`"${토막(다)}${토막(다)}${토막(다)}${토막(다)}"`],
+    ["narr","목이 아팠다. 언제부터 소리를 냈는지 모르겠다."]);
+  if (n >= 3) 지문.push(
+    ["say",`"${괴성}"`],
+    ["say",`"${토막(가)}${토막(나)}${토막(다)}"`]);
+
+  지문.push(
+    ["narr","누가 왔다 간 것도 같고 아닌 것도 같다."],
+    ["narr","무슨 말을 했는지는 기억나지 않는다."],
+    ["narr", n === 1
+      ? "방의 색이 조금 바랬다. 원래 그랬던 것 같기도 하다."
+      : "방이 또 한 겹 어두워졌다. 이번에는 원래 그랬다고 생각되지 않았다."]);
+
+  // 세 번째는 돌아오지 못한다. 남은 날들이 통째로 지나간다.
+  if (n >= 3) {
+    S.조기종료 = true;
+    지문.push(
+      ["narr","그 다음은 기억나지 않는다."],
+      ["narr","창밖이 밝았다가 어두웠다가 다시 밝았다."],
+      ["narr","몇 번인지는 세지 못했다."],
+      ["sys","정신을 차렸을 때 일주일은 이미 지나 있었다."]);
+    대기 = 최종선택;
+  } else {
+    지문.push(["sys", n >= 2 ? `${n}번째다. 이틀이 사라졌다.` : "하루가 통째로 사라졌다."]);
+    대기 = 다음날;
+  }
+
+  return 씬재생({ bg:"night", 인물:null, 대상:null, 지문 });
+}
+
+function 다음날() {
+  대기 = null;
+  S.day++; S.오늘이벤트 = 0;
+  if (S.day > 설정.총일수) return 최종선택();
+
+  // 체력은 하루치 행동력. 아침이면 완전히 돌아온다. 정신은 돌아오지 않는다.
+  const 전체력 = S.체력;
+  S.체력 = 설정.최대체력;
+  const 회복량 = S.체력 - 전체력;
+
+  // 감쇠 — 근거 없는 확신은 하룻밤 사이에 새어나간다.
+  // 비율이라 높이 쌓을수록 많이 잃고, 지쳐서 잠들수록 더 많이 잃는다.
+  const 지침 = 1 - 전체력 / 설정.최대체력;
+  const 감쇠율 = 설정.감쇠최소 + (설정.감쇠최대 - 설정.감쇠최소) * 지침;
+
+  const 샌것 = [];
+  Object.keys(S.호감).forEach(k => {
+    if (S.확정[k]) return;                    // 굳은 확신은 새어나가지 않는다
+    if (S.호감[k] <= 0) return;
+    const 전 = S.호감[k];
+    S.호감[k] = Math.max(0, 전 - Math.round(전 * 감쇠율));
+    if (전 !== S.호감[k]) 샌것.push(
+      `<span class="n">${그녀들[k].이름}</span>` +
+      `<span class="v">${S.호감[k]}%</span>` +
+      `<span class="d">−${전 - S.호감[k]}</span>`);
+  });
+
+  const 줄 = [];
+  if (S.day === 설정.총일수) 줄.push(`<div class="last">마지막 날</div>`);
+  if (회복량 > 0) 줄.push(`<div class="body">몸은 돌아왔다 · 체력 ${설정.최대체력}</div>`);
+  if (샌것.length) {
+    const 평 = 지침 > .7 ? "지쳐서 잠든 만큼 많이 샜다" : 지침 < .3 ? "몸이 성한 밤은 덜 샌다" : "";
+    if (줄.length) 줄.push(`<div class="rule"></div>`);
+    줄.push(`<div class="leadin">어젯밤 새어나간 확신</div>`);
+    줄.push(`<div class="rate">−${Math.round(감쇠율*100)}%</div>`);
+    if (평) 줄.push(`<div class="note">${평}</div>`);
+    줄.push(`<div class="rows">${샌것.join("")}</div>`);
+  }
+  const 부제 = 줄.length ? `<div class="day">${줄.join("")}</div>` : "";
+
+  // 중얼거리다 날린 날은 통째로 지나간다
+  if (S.하루날림 > 0) {
+    S.하루날림--;
+    HUD();
+    return 카드(`${S.day}일차`,
+      `<div class="day"><div class="skip">중얼거리는 동안 하루가 지나갔다.` +
+      `<small>아무도 만나지 못했다.</small></div></div>`,
+      ()=> 다음날());
+  }
+
+  카드(`${S.day}일차`, 부제, ()=>{ HUD(); 진행(); });
+}
+
+/* 카드 연출 */
+function 카드(제목, 부제, cb) {
+  const v = $("veil");
+  v.innerHTML = `<div class="card"><b>${제목}</b><div class="sub">${부제}</div></div>`;
+  v.classList.add("on");
+  // 읽을 것이 많은 날은 더 오래 머문다
+  const 줄수 = (부제.match(/<div class="rows"/) ? (부제.match(/class="n"/g) || []).length : 0);
+  const 머묾 = !부제 ? 1500 : 2400 + 줄수 * 320;
+  setTimeout(()=>{ if (cb) { v.classList.remove("on"); setTimeout(cb, 500); } }, 머묾);
+}
+
+/* 최종 선택 */
+function 최종선택() {
+  S.끝 = true;
+  $("aff").classList.remove("on"); $("box").classList.add("hide");
+  배경("night"); 인물(null);
+  const v = $("veil"); v.classList.add("on");
+  v.innerHTML = S.조기종료
+    ? `<div class="card"><b>일주일이 지나 있었다</b>
+        <div class="sub">며칠이 어떻게 갔는지는 기억나지 않는다.<br>
+        그래도 정해야 하는 것은 남아 있다.</div></div>`
+    : `<div class="card"><b>일주일이 지났다</b>
+        <div class="sub">면제는 자신의 그녀를 정해야 한다.</div></div>`;
+  setTimeout(()=>{
+    const 가능 = Object.keys(그녀들).filter(k => S.호감[k] >= 100);
+    if (!가능.length) return 아무도();
+
+    v.innerHTML = `<div class="card" style="justify-content:flex-start;padding-top:7%">
+      <b style="font-size:32px">누구를 고를 것인가</b>
+      <div class="sub" style="font-size:16px">
+        확신이 100%에 이른 상대에게만 갈 수 있다.<br>
+        <span style="color:#6f6982">고르는 것과 이어지는 것은 다르다.</span></div></div>`;
+    const c = $("choices"); c.className = "choices on final";
+    c.innerHTML = Object.keys(그녀들).map(k => {
+      const ok = S.호감[k] >= 100;
+      return ok
+        ? `<button class="ready" onclick="엔딩('${k}')">${그녀들[k].이름}<small>100% · 확신</small></button>`
+        : `<button class="lock" disabled>${그녀들[k].이름}<small>${S.호감[k]}% · 아직 확신이 없다</small></button>`;
+    }).join("");
+  }, 1800);
+}
+
+/* ── 엔딩 해금 기록 ──
+   브라우저에 남는 유일한 값. 진행 상황은 저장하지 않는다. */
+const 기록키 = "면제_엔딩_v1";
+function 본엔딩() {
+  try { return JSON.parse(localStorage.getItem(기록키)) || []; }
+  catch (e) { return []; }                       // 사생활 보호 모드 등
+}
+function 엔딩기록(n) {
+  try {
+    const l = 본엔딩();
+    if (l.includes(n)) return false;
+    l.push(n); localStorage.setItem(기록키, JSON.stringify(l));
+    return true;                                  // 처음 본 엔딩
+  } catch (e) { return false; }
+}
+
+/* 엔딩 번호 — HAPPY 1~5, BAD 6~10, 아무도 11 */
+const 엔딩번호 = { 엘리베이터:1, 횟집:2, 소개팅:3, 듀오:4, 귀신:5, 아무도:11 };
+const 총엔딩 = 11;
+const 엔딩표 = (키, 해피) => {
+  const n = 키 === "아무도" ? 11 : 엔딩번호[키] + (해피 ? 0 : 5);
+  const 처음 = 엔딩기록(n);
+  return `<div class="endtag ${해피 ? "happy" : "bad"}">${해피 ? "HAPPY" : "BAD"} ENDING` +
+    `<span class="endno">${n} / ${총엔딩}</span>` +
+    (처음 ? `<span class="새엔딩">NEW</span>` : "") + `</div>`;
+};
+
+/* 엔딩 이름 — 수집 화면에서만 쓴다 */
+const 엔딩이름 = { 1:"엘리베이터", 2:"횟집", 3:"소개팅", 4:"듀오", 5:"귀신",
+                   6:"엘리베이터", 7:"횟집", 8:"소개팅", 9:"듀오", 10:"귀신",
+                   11:"아무도" };
+
+/* 100%가 하나도 없을 때 */
+function 아무도() {
+  const 최고 = Object.keys(그녀들).reduce((a,b)=> S.호감[a] >= S.호감[b] ? a : b);
+  $("veil").innerHTML = `<div class="card">
+    ${엔딩표("아무도", false)}
+    <b style="font-size:28px;color:#8b849b">아무도 고를 수 없었다</b>
+    <div class="sub">
+      ${S.조기종료
+        ? `그는 세 번 무너졌고, 마지막에는 돌아오지 못했다.<br>
+           남은 날들이 어떻게 지나갔는지는 아무도 모른다. 그도 모른다.<br><br>`
+        : `일주일 동안 그는 다섯 사람을 쫓아다녔다.<br>
+           어느 쪽에도 확신에 이르지 못했다.<br><br>`}
+      가장 가까웠던 것은 ${그녀들[최고].이름}, ${S.호감[최고]}%.<br><br>
+      그는 무언가가 자꾸 끼어들었다고 생각했다.<br>
+      그것이 무엇인지는 끝내 말하지 않았다.
+    </div>
+    ${상태줄()}${다시버튼()}
+  </div>`;
+}
+
+/* 소개팅의 그녀만 실제 호감이 있다는 사실은 설정으로만 존재한다.
+   다른 그녀의 엔딩에서는 절대 언급하지 않는다. 그 루트를 직접 타야 알게 된다. */
+const 상태줄 = () => `<div class="sub" style="font-size:15px;color:#6f6982;margin-top:10px">
+  정신력 ${S.정신} · 체력 ${S.체력} · ₩${S.돈.toLocaleString()}
+  ${S.듀오상태?" · 듀오 "+S.듀오상태:""}${S.중얼횟수?" · 중얼거림 "+S.중얼횟수+"회":""}</div>`;
+const 다시버튼 = () => `<button style="margin-top:16px;padding:14px 30px;font-size:18px;border-radius:10px;
+  background:#241a28;color:#eee;border:1px solid #ffffff33;cursor:pointer"
+  onclick="location.reload()">타이틀로</button>`;
+
+/* ── 최종 미니게임 ──
+   100%인 그녀를 고르면 마지막 시도가 한 번 주어진다.
+   성공/실패로 엔딩이 갈린다. 다섯 명 각각 전용 미니게임이 있다. */
+const 최종설정 = {
+  엘리베이터: { bg:"elevator", 제목:"화면을 본다",   설명:"고개를 숙인 순간에만.",
+                각오:"3주를 기다렸다. 오늘은 본다." },
+  횟집:       { bg:"hoetjip",  제목:"회를 나른다",     설명:"흔들리는 접시를 받친다.",
+                각오:"오늘은 손이 떨리지 않는다." },
+  소개팅:     { bg:"고백",     제목:"답한다",         설명:"그녀가 먼저 말했다.",
+                각오:"그녀가 먼저 말할 것이다. 나는 알고 있다." },
+  듀오:       { bg:"game",     제목:"마이크를 켠다",   설명:"목소리가 나가는 순간에 맞춘다.",
+                각오:"듀오였다. 처음부터." },
+  귀신:       { bg:"night",    제목:"눈을 뜬다",       설명:"몸이 움직이지 않는다.",
+                각오:"오늘 밤은 도망치지 않는다." }
+};
+
+/* 미니게임 직전 — 일주일 내내 올려온 그 숫자를 마지막으로 한 번 보여준다.
+   가짜라는 걸 게임은 이미 아는데, 가장 성대하게 울린다. */
+function 마지막연출(키, 다음) {
+  const f = $("finale");
+  $("fnWho").className = "who"; $("fnLab").className = "lab";
+  $("fnTrack").className = "track"; $("fnFill").className = "fill";
+  $("fnPct").className = "pct"; $("fnSay").className = "say"; $("fnOnce").className = "once";
+  $("fnWho").textContent = 그녀들[키].이름;
+  $("fnSay").textContent = "“" + (최종설정[키].각오 || "") + "”";
+  $("fnPct").textContent = "0%";
+  $("fnFill").style.width = "0%";
+  f.classList.add("on");
+
+  setTimeout(() => $("fnWho").className = "who 보임", 250);
+  setTimeout(() => { $("fnLab").className = "lab 보임"; $("fnTrack").className = "track 보임"; }, 650);
+
+  /* 게이지와 숫자를 같은 프레임에서 몰아야 100%에 정확히 같이 닿는다 */
+  setTimeout(() => {
+    $("fnPct").className = "pct 보임";
+    const 시작 = performance.now(), 길이 = 1400;
+    (function 차오름(now) {
+      const p = Math.min(1, (now - 시작) / 길이);
+      const e = 1 - Math.pow(1 - p, 3);
+      $("fnFill").style.width = (e * 100) + "%";
+      $("fnPct").textContent = Math.round(e * 100) + "%";
+      if (p < 1) return requestAnimationFrame(차오름);
+      $("fnFill").style.width = "100%";
+      $("fnPct").textContent = "100%";
+      $("fnPct").className = "pct 보임 가득";
+      $("fnFill").className = "fill 가득";
+      $("fnTrack").className = "track 보임 가득";
+    })(시작);
+  }, 900);
+
+  /* 2300 — 100%가 다 찼다. 여기서 1.2초 동안 그것만 보여준다 */
+  setTimeout(() => $("fnSay").className = "say 보임", 3500);
+  setTimeout(() => $("fnOnce").className = "once 보임", 4450);
+  setTimeout(() => {
+    f.classList.remove("on");
+    setTimeout(다음, 450);
+  }, 5750);
+}
+
+function 엔딩(키) {
+  if (typeof event !== "undefined" && event) event.stopPropagation();
+  $("choices").className = "choices";
+  const c = 최종설정[키], g = 그녀들[키];
+  $("veil").classList.remove("on");
+  배경(c.bg, "마지막");
+  인물(g.인물없음 ? null : g.실루엣);
+  마지막연출(키, () => {
+    if (키 === "듀오") return MINI.사격.시작(성공 => 엔딩결과(키, 성공));
+    if (키 === "귀신") return MINI.가위눌림.시작(성공 => 엔딩결과(키, 성공));
+    if (키 === "횟집") return MINI.균형.시작(성공 => 엔딩결과(키, 성공));
+    if (키 === "엘리베이터") return MINI.훔쳐보기.시작(성공 => 엔딩결과(키, 성공));
+    if (키 === "소개팅") return MINI.타이핑.시작(성공 => 엔딩결과(키, 성공));
+  });
+}
+
+function 엔딩결과(키, 성공) {
+  인물(null);
+  const 줄 = 엔딩문[키](S, 성공);
+  $("veil").classList.add("on");
+  $("veil").innerHTML = `<div class="card">
+    ${엔딩표(키, 성공)}
+    <b style="font-size:30px;color:${성공 ? "#f0b45e" : "#8b849b"}">${그녀들[키].이름}</b>
+    <div class="sub">${줄.join("<br>")}</div>
+    ${상태줄()}${다시버튼()}
+  </div>`;
+}
+
+const 엔딩문 = {
+  엘리베이터: (S, ok) => ok
+    ? ["그는 화면을 봤다.",
+       "무엇이 떠 있었는지는 기억나지 않는다.",
+       "기억나는 것은 각도뿐이다. 화면이 아주 조금 이쪽으로 기울어 있었다.",
+       "보라고 기울인 것이다.",
+       "그는 계단을 다 내려올 때까지 웃고 있었다.",
+       "그날 밤은 아무 소리도 나지 않았고, 그는 오랜만에 푹 잤다."]
+    : ["계단참에서 그녀가 걸음을 늦췄다.",
+       "그는 한 계단 위에 멈춰 섰다. 지나갈 수도, 물러설 수도 없었다.",
+       "그녀는 휴대폰을 주머니에 넣고 마저 내려갔다.",
+       "다음 날부터 그녀는 엘리베이터를 탔다.",
+       "그는 그것을 두 층 차이라고 생각했다. 그뿐이라고."],
+
+  횟집: (S, ok) => ok
+    ? ["앞치마를 벗어 카운터에 올려놓고 그녀 앞에 섰다.",
+       "그녀가 처음으로 그를 똑바로 봤다.",
+       "\"…네?\"",
+       "3초쯤이었다. 눈을 마주친 것이다.",
+       "퇴근길에 그는 편의점에서 제일 비싼 아이스크림을 샀다.",
+       "치와와는 원래 아무나 물지 않는다. 물 만한 사이가 되어야 문다."]
+    : ["말을 꺼내려다 접시를 놓쳤다.",
+       "그녀는 빗자루를 가지러 갔다.",
+       "그게 전부였다."],
+
+  소개팅: (S, ok) => ok
+    ? ["\"사귀자.\"",
+       "그녀는 웃었다. 웃는 데 시간이 걸리지 않았다.",
+       "\"네.\"",
+       "돌아오는 길에 그는 두 번 뒤를 돌아봤다.",
+       "두 번 다 그녀가 아직 그 자리에 서 있었다.",
+       "가로등 아래가 조금 따뜻했다."]
+    : ["입이 열리지 않았다.",
+       "침묵이 길어졌다. 그녀가 먼저 웃었다.",
+       "\"…농담이에요.\"",
+       "그리고 물을 한 모금 마셨다.",
+       "그 말을 하기까지 그녀가 며칠을 썼는지, 그는 끝내 모른다."],
+
+  듀오: (S, ok) => ok
+    ? ["그는 마이크를 켰다.",
+       "\"…안녕.\"",
+       "잠깐의 정적 뒤에 답이 왔다.",
+       "\"어 안녕ㅋㅋ\"",
+       "그날 밤 그는 잠을 자지 못했다. 자고 싶지 않았다.",
+       "천장을 보면서 두 글자를 몇 번이고 다시 들었다."]
+    : ["마이크 버튼 위에서 손가락이 멈췄다.",
+       S.듀오상태 === "포기"
+         ? "관전 창 안에서 두 사람은 마지막까지 살아남았다."
+         : "그녀가 먼저 나갔다.",
+       "화면 밖에서 그가 어떤 사람인지는 아무도 모른다. 그녀도 모른다."],
+
+  귀신: (S, ok) => ok
+    ? ["그는 버둥거리기를 멈췄다.",
+       "무게가 천천히 가라앉았다. 밀어내는 것이 아니라 얹히는 것이었다.",
+       "숨이 느려졌고, 그는 눈을 감았다.",
+       "아침에 팔에 상처가 하나 더 있었다.",
+       "그는 그것을 오래 들여다보며 웃었다.",
+       "일주일 만에 처음으로, 그는 자기가 혼자가 아니라고 생각했다."]
+    : ["그는 빠져나왔다.",
+       "이겨냈다. 팔이 풀렸고, 숨이 돌아왔고, 몸이 다시 자기 것이 되었다.",
+       "힘을 낼수록 무게가 옅어지는 것이 느껴졌다. 이기고 있다는 뜻이었다.",
+       "한 번 버둥거릴 때마다 한 뼘씩이었다.",
+       "마지막 한 번에, 그것은 완전히 놓였다.",
+       "불을 켰다. 방에는 아무도 없었다.",
+       "그 다음 밤에도 아무도 없었다. 그 다음 밤에도.",
+       "이 방에서 유일하게 그를 찾아오던 것을, 그는 끝내 이겨냈다."]
+};
+
+
+/* 오류가 나면 조용히 멈추지 않고 화면에 띄운다 */
+window.addEventListener("error", ev => {
+  const v = $("veil");
+  v.classList.add("on");
+  v.innerHTML = `<div class="card"><b style="font-size:24px;color:#e2607a">오류</b>
+    <div class="sub" style="font-size:15px;font-family:monospace;text-align:left">
+      ${ev.message}<br>${(ev.filename||"").split("/").pop()}:${ev.lineno}<br><br>
+      day ${S && S.day} / slot ${S && S.slot}
+    </div></div>`;
+});
+
+/* 클릭 진행 */
+$("vn").addEventListener("click", () => {
+  if (S.끝) return;
+  if ($("choices").classList.contains("on")) return;
+  다음줄();
+});
+
+/* ── 개발용 진입점 ──
+   #사격           사격 미니게임만 반복 테스트
+   #최종           전원 100% 상태로 최종 선택
+   #최종_듀오      듀오만 100% 상태로 최종 선택
+   #이벤트id       그 이벤트를 처음 한 번 강제로 띄움                     */
+새게임(); HUD();
+
+/* ── 타이틀 ── */
+function 수집그리기() {
+  const 본 = 본엔딩();
+  const 칸 = [];
+  for (let n = 1; n <= 총엔딩; n++) {
+    const 있 = 본.includes(n);
+    const bad = n >= 6 && n <= 10;
+    const 라벨 = n === 11 ? "아무도" : (bad ? "BAD" : "HAPPY");
+    칸.push(`<div class="cell${있 ? " got" : ""}${bad || n === 11 ? " bad" : ""}">` +
+      `<span class="num">${String(n).padStart(2, "0")}</span>` +
+      (있 ? `${라벨}<br>${엔딩이름[n]}` : "?") + `</div>`);
+  }
+  $("coll").innerHTML =
+    `<div class="head">엔딩 <b>${본.length} / ${총엔딩}</b></div>` +
+    `<div class="grid">${칸.join("")}</div>` +
+    (본.length ? `<div class="reset"><button onclick="기록지우기()">기록 지우기</button></div>` : "");
+}
+
+function 기록지우기() {
+  if (!confirm("모은 엔딩 기록을 지웁니다. 되돌릴 수 없습니다.")) return;
+  try { localStorage.removeItem(기록키); } catch (e) {}
+  수집그리기();
+}
+
+function 타이틀() {
+  새게임(); HUD(); 오염표시();
+  $("veil").classList.remove("on");
+  $("veil").innerHTML = "";
+  수집그리기();
+  $("title").classList.add("on");
+}
+
+function 시작하기() {
+  if (typeof event !== "undefined" && event) event.stopPropagation();
+  $("title").classList.remove("on");
+  카드("1일차", "", () => 진행());
+}
+
+(function 부팅() {
+  const h = 강제이벤트;
+
+  if (h === "타이핑") {
+    강제이벤트 = null;
+    배경("sogae", "테스트");
+    인물(그녀들.소개팅.실루엣);
+    setTimeout(() => MINI.타이핑.시작(성공 => {
+      $("veil").classList.add("on");
+      $("veil").innerHTML = `<div class="card">
+        <b style="color:${성공 ? "#82c795" : "#e8756c"}">${성공 ? "답했다" : "답하지 못했다"}</b>
+        <div class="sub">"${타이핑설정.대사}" → "${타이핑설정.답}" · 제한 ${타이핑설정.제한/1000}초</div>
+        <button style="margin-top:16px;padding:14px 30px;font-size:18px;border-radius:10px;
+          background:#241a28;color:#eee;border:1px solid #ffffff33;cursor:pointer"
+          onclick="location.reload()">다시</button></div>`;
+    }), 500);
+    return;
+  }
+
+  if (h === "훔쳐") {
+    강제이벤트 = null;
+    배경("elevator", "테스트");
+    return MINI.훔쳐보기.시작((성공, n) => {
+      $("veil").classList.add("on");
+      $("veil").innerHTML = `<div class="card">
+        <b style="color:${성공 ? "#82c795" : "#e8756c"}">${성공 ? "보았다" : "들켰다"}</b>
+        <div class="sub">${n} / ${훔쳐설정.판수} 성공 · ${훔쳐설정.필요}번 필요</div>
+        <button style="margin-top:16px;padding:14px 30px;font-size:18px;border-radius:10px;
+          background:#241a28;color:#eee;border:1px solid #ffffff33;cursor:pointer"
+          onclick="location.reload()">다시</button></div>`;
+    });
+  }
+
+  if (h === "균형") {
+    강제이벤트 = null;
+    배경("hoetjip", "테스트");
+    return MINI.균형.시작(성공 => {
+      $("veil").classList.add("on");
+      $("veil").innerHTML = `<div class="card">
+        <b style="color:${성공 ? "#82c795" : "#e8756c"}">${성공 ? "무사히 놓았다" : "쏟았다"}</b>
+        <div class="sub">불안정 ${균형설정.불안정} · 조작 ${균형설정.조작} · 한계 ${균형설정.한계}도</div>
+        <button style="margin-top:16px;padding:14px 30px;font-size:18px;border-radius:10px;
+          background:#241a28;color:#eee;border:1px solid #ffffff33;cursor:pointer"
+          onclick="location.reload()">다시</button></div>`;
+    });
+  }
+
+  if (h === "가위") {
+    강제이벤트 = null;
+    배경("night", "테스트");
+    return MINI.가위눌림.시작(버팀 => {
+      $("veil").classList.add("on");
+      $("veil").innerHTML = `<div class="card">
+        <b style="color:${버팀 ? "#82c795" : "#e8756c"}">${버팀 ? "손을 놓았다 — 이어짐" : "빠져나왔다 — 이어지지 못함"}</b>
+        <div class="sub">버티기 ${가위설정.제한/1000}초 · 한 번당 ${가위설정.한번} · 감소 ${가위설정.감소}/프레임</div>
+        <button style="margin-top:16px;padding:14px 30px;font-size:18px;border-radius:10px;
+          background:#241a28;color:#eee;border:1px solid #ffffff33;cursor:pointer"
+          onclick="location.reload()">다시</button></div>`;
+    });
+  }
+
+  if (h === "사격") {
+    강제이벤트 = null;
+    배경("game", "테스트");
+    const 반복 = () => MINI.사격.시작((성공, 처치) => {
+      $("veil").classList.add("on");
+      $("veil").innerHTML = `<div class="card">
+        <b style="color:${성공 ? "#82c795" : "#e8756c"}">${성공 ? "제압 완료" : "실패"}</b>
+        <div class="sub">${처치} / ${사격설정.적수} 명 · 탄창 ${사격설정.탄창}발 · 간격 ${사격설정.간격}ms</div>
+        <button style="margin-top:16px;padding:14px 30px;font-size:18px;border-radius:10px;
+          background:#241a28;color:#eee;border:1px solid #ffffff33;cursor:pointer"
+          onclick="location.reload()">다시</button></div>`;
+    });
+    return 반복();
+  }
+
+  if (h && h.startsWith("최종")) {
+    const 키 = h.split("_")[1];
+    강제이벤트 = null;
+    Object.keys(그녀들).forEach(k => {
+      if (!키 || k === 키) { S.호감[k] = 100; S.확정[k] = true; }
+      else S.호감[k] = 40 + Math.floor(Math.random() * 45);
+    });
+    S.day = 설정.총일수; HUD();
+    return 최종선택();
+  }
+
+  타이틀();
+})();
+</script>
+</body>
+</html>
