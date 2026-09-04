@@ -324,7 +324,17 @@
     background:linear-gradient(90deg,transparent,#6b5f8c 30%,#6b5f8c 70%,transparent)}
   .title .pitch{font-size:calc(16px*var(--s));line-height:2;color:#a49db8;text-align:center;max-width:520px}
   .title .pitch b{color:#e2607a;font-weight:700}
-  .title .go{margin-top:calc(30px*var(--s));padding:calc(16px*var(--s)) calc(54px*var(--s));
+  .title .diff{display:flex;gap:calc(8px*var(--s));margin-top:calc(26px*var(--s))}
+  .title .diff button{background:#141020;color:#6f6982;border:1px solid #2b2637;
+    border-radius:9px;padding:calc(9px*var(--s)) calc(22px*var(--s));
+    font:inherit;font-size:calc(13px*var(--s));font-weight:800;letter-spacing:.16em;
+    cursor:pointer;transition:.16s;min-width:calc(104px*var(--s))}
+  .title .diff button:hover{border-color:#4a4360;color:#a49db8}
+  .title .diff button.on{background:#241a28;color:#f0b45e;border-color:#6b5228}
+  .title .diff button small{display:block;font-size:calc(10px*var(--s));font-weight:600;
+    letter-spacing:0;margin-top:calc(3px*var(--s));color:#635e78}
+  .title .diff button.on small{color:#8b7a5c}
+  .title .go{margin-top:calc(18px*var(--s));padding:calc(16px*var(--s)) calc(54px*var(--s));
     font-size:calc(20px*var(--s));font-weight:800;letter-spacing:.1em;
     border-radius:11px;cursor:pointer;color:#0d0b12;border:none;
     background:linear-gradient(180deg,#f5d089,#d9a441);box-shadow:0 8px 26px #d9a44140}
@@ -417,6 +427,7 @@
       화면에 뜨는 <b>호감도</b>는 그가 추정한 값이다.<br>
       마지막 날, 100%가 된 사람 중에서 고른다.
     </div>
+    <div class="diff" id="diff"></div>
     <button class="go" onclick="시작하기()">시작</button>
     <div class="keys" id="keys"></div>
     <div class="coll" id="coll"></div>
@@ -1642,8 +1653,10 @@ MINI.훔쳐보기 = (() => {
     $("shellhud").className = "shellhud on";
     $("shellhud").innerHTML = `<b>계단</b>` +
       `<small>${조작("스페이스 또는 클릭", "화면을 탭")} — 그녀가 휴대폰을 옆으로 내미는 순간에만 보인다.<br>` +
-      `<span style="color:#e8756c">한 번이라도 놓치면 끝난다</span> ` +
-      `<span style="color:#e2c05a">${훔쳐설정.판수}번 연속</span></small>`;
+      (훔쳐설정.필요 >= 훔쳐설정.판수
+        ? `<span style="color:#e8756c">한 번이라도 놓치면 끝난다</span> `
+        : "") +
+      `<span style="color:#e2c05a">${훔쳐설정.판수}번 중 ${훔쳐설정.필요}번</span></small>`;
     $("choices").className = "choices on";
     $("choices").innerHTML = `<button onclick="MINI.훔쳐보기.개시()">한 계단 뒤에서 따라간다</button>`;
     그리기();
@@ -1679,7 +1692,9 @@ MINI.훔쳐보기 = (() => {
     G.결과 = 보임 ? "봤다" : "못 봤다";
     if (보임) G.성공++;
     G.로그.push(G.결과);
-    setTimeout(보임 ? 다음판 : 끝, 900);   // 한 번 놓치면 거기서 끝
+    // 남은 판을 다 맞춰도 필요 수에 못 미치면 그 자리에서 끝난다
+    const 남은판 = 훔쳐설정.판수 - G.판 - 1;
+    setTimeout(G.성공 + 남은판 >= 훔쳐설정.필요 ? 다음판 : 끝, 900);
   }
 
   function 다음판() {
@@ -1700,7 +1715,9 @@ MINI.훔쳐보기 = (() => {
     if (G.상태 !== "진행") return;
     G.t++;
     if (!G.결과 && performance.now() - G.판시작 > 훔쳐설정.제한) {
-      G.결과 = "놓쳤다"; G.로그.push(G.결과); setTimeout(끝, 900);
+      G.결과 = "놓쳤다"; G.로그.push(G.결과);
+      const 남 = 훔쳐설정.판수 - G.판 - 1;
+      setTimeout(G.성공 + 남 >= 훔쳐설정.필요 ? 다음판 : 끝, 900);
     }
     그리기();
     raf = requestAnimationFrame(루프);
@@ -3216,6 +3233,63 @@ function 최종선택() {
   }, 1800);
 }
 
+/* ── 난이도 ──
+   NORMAL 이 기본이자 의도된 값이다. EASY 는 확신이 덜 새어나가고
+   마지막 한 번의 시도가 너그럽다. 이야기와 분량은 똑같다. */
+const 난이도키 = "면제_난이도_v1";
+const 기본값 = JSON.parse(JSON.stringify(
+  { 설정, 훔쳐설정, 균형설정, 타이핑설정, 사격설정 }));
+
+const 난이도표 = {
+  NORMAL: { 설명: "의도된 난이도", 적용() {} },
+  EASY: {
+    설명: "덜 새고, 더 너그럽다",
+    적용() {
+      설정.감쇠최소 = 0.06; 설정.감쇠최대 = 0.14;   // 하룻밤에 덜 샌다
+      설정.확신회복 = { 정신: 12, 체력: 14 };
+
+      훔쳐설정.필요 = 4;                            // 5판 중 4판
+      훔쳐설정.제한 = 2400;
+      훔쳐설정.문턱증가 = 0.048;
+
+      균형설정.한계 = 52;                           // 더 기울어도 버틴다
+      균형설정.외란세기 = 0.14;
+
+      타이핑설정.제한 = 6500;
+
+      사격설정.적크기 = 0.62;                       // 적이 더 크다
+      사격설정.제한 = 5200;
+      사격설정.탄창 = 34;
+      사격설정.튐 = 9; 사격설정.좌우 = 5;
+      // 가위눌림은 손대지 않는다 — 여기서는 '실패'가 곧 이어지는 길이라
+      // 쉽게 만들수록 BAD 로 간다. 난이도의 방향이 반대다.
+    }
+  }
+};
+
+let 난이도 = (() => {
+  try { return 난이도표[localStorage.getItem(난이도키)] ? localStorage.getItem(난이도키) : "NORMAL"; }
+  catch (e) { return "NORMAL"; }
+})();
+
+function 난이도적용(k) {
+  난이도 = 난이도표[k] ? k : "NORMAL";
+  try { localStorage.setItem(난이도키, 난이도); } catch (e) {}
+  // 항상 기본값으로 되돌린 뒤 적용한다 — 두 번 눌러도 누적되지 않는다
+  const 대상 = { 설정, 훔쳐설정, 균형설정, 타이핑설정, 사격설정 };
+  for (const 이름 of Object.keys(기본값))
+    Object.assign(대상[이름], JSON.parse(JSON.stringify(기본값[이름])));
+  난이도표[난이도].적용();
+  난이도그리기();
+}
+
+function 난이도그리기() {
+  const el = $("diff"); if (!el) return;
+  el.innerHTML = Object.keys(난이도표).reverse().map(k =>
+    `<button class="${k === 난이도 ? "on" : ""}" onclick="난이도적용('${k}')">` +
+    `${k}<small>${난이도표[k].설명}</small></button>`).join("");
+}
+
 /* ── 엔딩 해금 기록 ──
    브라우저에 남는 유일한 값. 진행 상황은 저장하지 않는다. */
 const 기록키 = "면제_엔딩_v1";
@@ -3271,7 +3345,7 @@ function 아무도() {
 /* 소개팅의 그녀만 실제 호감이 있다는 사실은 설정으로만 존재한다.
    다른 그녀의 엔딩에서는 절대 언급하지 않는다. 그 루트를 직접 타야 알게 된다. */
 const 상태줄 = () => `<div class="sub" style="font-size:15px;color:#6f6982;margin-top:10px">
-  정신력 ${S.정신} · 체력 ${S.체력} · ₩${S.돈.toLocaleString()}
+  ${난이도} · 정신력 ${S.정신} · 체력 ${S.체력} · ₩${S.돈.toLocaleString()}
   ${S.듀오상태?" · 듀오 "+S.듀오상태:""}${S.중얼횟수?" · 중얼거림 "+S.중얼횟수+"회":""}</div>`;
 const 다시버튼 = () => `<button style="margin-top:16px;padding:14px 30px;font-size:18px;border-radius:10px;
   background:#241a28;color:#eee;border:1px solid #ffffff33;cursor:pointer"
@@ -3484,6 +3558,7 @@ function 기록지우기() {
 
 function 타이틀() {
   새게임(); HUD(); 오염표시();
+  난이도그리기();
   $("keys").innerHTML = 조작(
     `클릭으로 진행 · 미니게임은 <b>방향키 / 스페이스 / 마우스</b>`,
     `탭으로 진행 · 미니게임은 <b>화면 터치</b><br>` +
@@ -3502,6 +3577,7 @@ function 시작하기() {
 
 (function 부팅() {
   방향확인();
+  난이도적용(난이도);
   const h = 강제이벤트;
 
   if (h === "타이핑") {
