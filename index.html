@@ -28,16 +28,16 @@
   @media (min-width:901px) and (min-height:620px) {
     .vn{border-radius:14px;box-shadow:0 30px 90px #000a}
   }
+  .vn>svg.bg{position:absolute;inset:0;width:100%;height:100%}
+  /* 배경 컨테이너 — 안의 svg·canvas가 화면을 정확히 채우게 한다 */
+  #bg{position:absolute;inset:0;overflow:hidden}
+  #bg>svg,#bg>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
   /* 캔버스는 제 비율(2:1)을 지키며 가운데 놓인다.
      object-fit 을 쓰면 요소 상자와 실제 그림이 어긋나 클릭 좌표가 틀어진다.
      요소 자체를 비율에 맞추면 getBoundingClientRect() 가 그대로 맞는다. */
   #bg>canvas{position:absolute;inset:auto;top:50%;left:50%;
     transform:translate(-50%,-50%);
     width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:2/1}
-  .vn>svg.bg{position:absolute;inset:0;width:100%;height:100%}
-  /* 배경 컨테이너 — 안의 svg·canvas가 화면을 정확히 채우게 한다 */
-  #bg{position:absolute;inset:0;overflow:hidden}
-  #bg>svg,#bg>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 
   .stand{position:absolute;right:5%;bottom:0;height:99%;
     opacity:0;transform:translateY(28px);
